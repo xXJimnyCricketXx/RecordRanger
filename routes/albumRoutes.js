@@ -683,6 +683,52 @@ router.get('/api/collection/ids', requireAuth, async (req, res) => {
     }
 });
 
+// Duplicate check
+router.get('/api/check-duplicate', requireAuth, async (req, res) => {
+    try {
+        const { title, artist, excludeId } = req.query;
+        if (!title || !artist) return res.json({ duplicate: false });
+
+        const adminId = await getAdminId();
+        const baseArtist = artist.trim().replace(/\s*\(\d+\)$/i, '').trim();
+
+        const escReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const titleReg  = new RegExp(`^${escReg(title.trim())}$`, 'i');
+        const artistReg = new RegExp(`^${escReg(baseArtist)}(\\s*\\(\\d+\\))?$`, 'i');
+
+        const query = { owner: adminId, title: titleReg, artist: artistReg };
+        if (excludeId) query._id = { $ne: excludeId };
+
+        const matches = await Item.find(query).lean();
+        if (!matches.length) return res.json({ duplicate: false });
+
+        res.json({
+            duplicate: true,
+            matches: matches.map(formatForView)
+        });
+    } catch (err) {
+        console.error(err);
+        res.json({ duplicate: false });
+    }
+});
+
+// Increment quantity of existing album (used after duplicate confirmation)
+router.post('/api/increment-quantity/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const adminId = await getAdminId();
+        const album = await Item.findOne({ _id: req.params.id, owner: adminId });
+        if (!album) return res.status(404).json({ success: false });
+
+        const newQty = (album.quantity || 1) + 1;
+        await Item.updateOne({ _id: album._id }, { $set: { quantity: newQty } });
+
+        res.json({ success: true, quantity: newQty, redirectUrl: `/album/${album._id}` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false });
+    }
+});
+
 // Print routes
 router.get('/print/collection', requireAuth, async (req, res) => {
     try {
