@@ -1,0 +1,262 @@
+<%- include('partials/header') %>
+
+<div class="max-w-screen-lg mx-auto pb-20 px-4">
+
+    <nav class="flex mb-6 text-sm opacity-60 transition-colors">
+        <a href="<%= baseUrl %>/add-vinyl" class="hover:opacity-100 transition-opacity flex items-center py-2">
+            <i class="fa-solid fa-arrow-left mr-2"></i> <%= t('common.back_to_search') %>
+        </a>
+    </nav>
+
+    <div class="text-center mb-8 md:mb-12">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-theme/10 mb-4">
+            <i class="fa-solid fa-pen-to-square text-3xl text-primary-theme"></i>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-black"><%= t('add_vinyl.manual_title') %></h1>
+        <p class="opacity-60 mt-2"><%= t('add_vinyl.manual_desc') %></p>
+    </div>
+
+    <form action="<%= baseUrl %>/save-vinyl" method="POST" class="space-y-6">
+
+        <input type="hidden" name="media_type" value="vinyl">
+        <input type="hidden" name="tracklist_json" value="[]">
+        <input type="hidden" name="cover_image" id="coverImageInput" value="">
+        <input type="hidden" name="user_image" value="">
+        <input type="hidden" name="in_wishlist" id="inWishlistInput" value="false">
+
+        <!-- Grunddaten -->
+        <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
+            <h2 class="text-sm font-black uppercase tracking-widest opacity-60 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-primary-theme"></i>
+                Grunddaten
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.field_title') %> <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="title" required
+                        placeholder="Titel des Albums"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.field_artist') %> <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="artist" required
+                        placeholder="Interpret / Band"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.year_label') %>
+                    </label>
+                    <input type="number" name="year" min="1900" max="<%= new Date().getFullYear() %>"
+                        placeholder="z.B. 1972"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.country') %>
+                    </label>
+                    <input type="text" name="country"
+                        placeholder="z.B. Germany, UK, US"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.label_label') %>
+                    </label>
+                    <input type="text" name="label"
+                        placeholder="z.B. Columbia, EMI"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.catalog_label') %>
+                    </label>
+                    <input type="text" name="catalog_number"
+                        placeholder="z.B. 1C 064-04 850"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.field_genres') %>
+                    </label>
+                    <input type="text" name="genres"
+                        placeholder="Rock, Pop, Jazz (kommagetrennt)"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.field_styles') %>
+                    </label>
+                    <input type="text" name="styles"
+                        placeholder="Prog Rock, Krautrock (kommagetrennt)"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Cover -->
+        <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
+            <h2 class="text-sm font-black uppercase tracking-widest opacity-60 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-image text-primary-theme"></i>
+                Cover
+            </h2>
+            <div class="flex flex-col sm:flex-row gap-6 items-start">
+                <div class="w-32 h-32 flex-shrink-0 rounded-xl bg-black/5 dark:bg-white/5 overflow-hidden flex items-center justify-center">
+                    <img id="coverPreview" src="" class="w-full h-full object-cover hidden">
+                    <i id="coverPlaceholder" class="fa-solid fa-record-vinyl text-4xl opacity-20"></i>
+                </div>
+                <div class="flex-grow">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        URL des Cover-Bilds
+                    </label>
+                    <input type="url" id="coverUrlField"
+                        placeholder="https://..."
+                        oninput="updateCover(this.value)"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                    <p class="text-xs opacity-50 mt-2">Optional – URL eines Bildes aus dem Internet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details -->
+        <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
+            <h2 class="text-sm font-black uppercase tracking-widest opacity-60 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-primary-theme"></i>
+                Details
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.barcode_label') %>
+                    </label>
+                    <input type="text" name="barcode"
+                        placeholder="z.B. 5099746005727"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        Pressung / Format
+                    </label>
+                    <input type="text" name="format_type"
+                        placeholder="z.B. Gatefold, Limited Edition"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.field_edition') %>
+                    </label>
+                    <input type="text" name="variant_color"
+                        placeholder="<%= t('confirm_vinyl.edition_placeholder') %>"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.sleeve_condition_label') %>
+                    </label>
+                    <select name="sleeve_condition" class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all cursor-pointer">
+                        <option value="" class="bg-white dark:bg-[#1a1a1a]" selected><%= t('confirm_vinyl.sleeve_condition_placeholder') %></option>
+                        <option value="M"   class="bg-white dark:bg-[#1a1a1a]">Mint (M)</option>
+                        <option value="NM"  class="bg-white dark:bg-[#1a1a1a]">Near Mint (NM)</option>
+                        <option value="VG+" class="bg-white dark:bg-[#1a1a1a]">Very Good Plus (VG+)</option>
+                        <option value="VG"  class="bg-white dark:bg-[#1a1a1a]">Very Good (VG)</option>
+                        <option value="G+"  class="bg-white dark:bg-[#1a1a1a]">Good Plus (G+)</option>
+                        <option value="G"   class="bg-white dark:bg-[#1a1a1a]">Good (G)</option>
+                        <option value="F"   class="bg-white dark:bg-[#1a1a1a]">Fair (F)</option>
+                        <option value="P"   class="bg-white dark:bg-[#1a1a1a]">Poor (P)</option>
+                        <option value="Generic" class="bg-white dark:bg-[#1a1a1a]"><%= t('confirm_vinyl.sleeve_condition_generic') %></option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <i class="fa-solid fa-box-archive mr-1"></i> <%= t('common.location') %>
+                    </label>
+                    <input type="text" name="location" list="locationList"
+                        placeholder="<%= t('placeholders.location') %>"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                    <datalist id="locationList">
+                        <% locations.forEach(loc => { %><option value="<%= loc %>"><% }) %>
+                    </datalist>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.field_quantity') %>
+                    </label>
+                    <input type="number" name="quantity" min="1" value="1"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        Discogs-ID <span class="opacity-50 font-normal normal-case text-xs ml-2">– optional, für spätere Metadaten-Anreicherung</span>
+                    </label>
+                    <input type="text" name="discogs_id"
+                        placeholder="z.B. 870138"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vinyl.field_comments') %>
+                    </label>
+                    <textarea name="comments" rows="3"
+                        placeholder="<%= t('confirm_vinyl.comments_placeholder') %>"
+                        class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg focus:ring-primary-theme focus:border-primary-theme block w-full p-3 placeholder-opacity-50 transition-colors outline-none"></textarea>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Speichern -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-end">
+            <button type="button" onclick="submitAs('wishlist')"
+                class="w-full sm:w-auto bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white border border-black/10 dark:border-white/10 font-bold px-8 py-4 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-3">
+                <i class="fa-solid fa-heart"></i>
+                <%= t('confirm_vinyl.btn_wishlist') %>
+            </button>
+            <button type="button" onclick="submitAs('collection')"
+                class="w-full sm:w-auto bg-primary-theme hover:brightness-110 font-bold text-white px-8 py-4 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-3 shadow-lg shadow-primary-theme/20">
+                <i class="fa-solid fa-record-vinyl"></i>
+                <%= t('confirm_vinyl.btn_collection') %>
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    function updateCover(url) {
+        document.getElementById('coverImageInput').value = url;
+        const img = document.getElementById('coverPreview');
+        const ph  = document.getElementById('coverPlaceholder');
+        if (url) { img.src = url; img.classList.remove('hidden'); ph.classList.add('hidden'); }
+        else      { img.classList.add('hidden'); ph.classList.remove('hidden'); }
+    }
+
+    function submitAs(target) {
+        document.getElementById('inWishlistInput').value = target === 'wishlist' ? 'true' : 'false';
+        document.querySelector('form').submit();
+    }
+</script>
+
+<%- include('partials/footer') %>

@@ -232,14 +232,40 @@
                             <span class="text-xs opacity-50 uppercase font-bold">
                                 <%= t('detail.estimation_title') %>
                             </span>
-                            <button id="btnEstimate"
-                                onclick="fetchEstimation('<%= album.discogs_id %>', '<%= album.quantity || 1 %>', '<%= album.sleeve_condition || '' %>')"
-                                class="text-xs bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white px-2 py-1 rounded transition-colors flex items-center gap-1 border border-transparent">
-                                <i class="fa-solid fa-calculator"></i>
-                                <%= t('detail.calculate_btn') %>
-                            </button>
+                            <% if (album.discogs_id) { %>
+                                <button id="btnEstimate"
+                                    onclick="fetchEstimation('<%= album.discogs_id %>', '<%= album.quantity || 1 %>', '<%= album.sleeve_condition || '' %>')"
+                                    class="text-xs bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white px-2 py-1 rounded transition-colors flex items-center gap-1 border border-transparent">
+                                    <i class="fa-solid fa-rotate" id="btnEstimateIcon"></i>
+                                    <%= album.estimated_price && album.estimated_price.value ? t('detail.refresh_info_btn') || 'Neu abrufen' : t('detail.calculate_btn') %>
+                                </button>
+                            <% } %>
                         </div>
-                        <div id="priceResult" class="hidden text-sm"></div>
+
+                        <% if (album.estimated_price && album.estimated_price.value) { %>
+                            <div id="storedPrice" class="flex items-baseline gap-2">
+                                <span class="text-2xl font-black text-primary-theme">
+                                    <%=
+                                        new Intl.NumberFormat(currentLng === 'de' ? 'de-DE' : 'en-US', {
+                                            style: 'currency',
+                                            currency: album.estimated_price.currency || 'USD',
+                                            maximumFractionDigits: 2
+                                        }).format(album.estimated_price.value * (album.quantity || 1))
+                                    %>
+                                </span>
+                                <span class="text-xs opacity-40">
+                                    <% if (album.estimated_price.updated_at) { %>
+                                        Stand: <%= new Date(album.estimated_price.updated_at).toLocaleDateString(currentLng === 'de' ? 'de-DE' : 'en-US') %>
+                                    <% } %>
+                                </span>
+                            </div>
+                        <% } else { %>
+                            <div id="storedPrice" class="text-sm opacity-40 italic">
+                                <%= album.discogs_id ? (t('detail.no_estimate') || 'Noch nicht geschätzt') : 'Keine Discogs-ID – Schätzung nicht möglich' %>
+                            </div>
+                        <% } %>
+
+                        <div id="priceResult" class="hidden text-sm mt-1"></div>
                         <div id="priceLoader" class="hidden text-center py-2 opacity-50 text-xs italic">
                             <i class="fa-solid fa-circle-notch fa-spin"></i>
                             <%= t('detail.market_analysis') %>
@@ -425,10 +451,13 @@
 
         async function fetchEstimation(id, quantity, condition) {
             const btn = document.getElementById('btnEstimate');
+            const icon = document.getElementById('btnEstimateIcon');
             const resultDiv = document.getElementById('priceResult');
             const loader = document.getElementById('priceLoader');
+            const storedPriceDiv = document.getElementById('storedPrice');
 
-            btn.classList.add('hidden');
+            if (icon) icon.className = 'fa-solid fa-circle-notch fa-spin';
+            btn.disabled = true;
             loader.classList.remove('hidden');
 
             try {
@@ -485,13 +514,26 @@
                 `;
                     loader.classList.add('hidden');
                     resultDiv.classList.remove('hidden');
+
+                    // Update stored price display in place (route already saved to DB)
+                    if (storedPriceDiv) {
+                        const today = new Date().toLocaleDateString(currentLocale);
+                        storedPriceDiv.innerHTML = `
+                            <span class="text-2xl font-black text-primary-theme">
+                                ${new Intl.NumberFormat(currentLocale, { style: 'currency', currency: currency }).format(individualPrice * quantity)}
+                            </span>
+                            <span class="text-xs opacity-40 ml-2">Stand: ${today}</span>`;
+                    }
+                    if (icon) icon.className = 'fa-solid fa-rotate';
+                    btn.disabled = false;
                 }
             } catch (err) {
                 loader.innerHTML = `<span class="opacity-50 text-xs italic">${translations.unavailable_data}</span>`;
                 setTimeout(() => {
                     loader.classList.add('hidden');
                     loader.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> ${translations.analyzing}`;
-                    btn.classList.remove('hidden');
+                    if (icon) icon.className = 'fa-solid fa-rotate';
+                    btn.disabled = false;
                 }, 3000);
             }
         } async function importTracklist(albumId, discogsId) {

@@ -20,6 +20,12 @@ const vinylSchema = new mongoose.Schema({
   discogs_id: Number,
   country: { type: String, default: '' },
   tracklist: [{ position: String, title: String, duration: String }],
+  estimated_price: {
+    value:      { type: Number, default: null },
+    currency:   { type: String, default: null },
+    source:     { type: String, default: null },
+    updated_at: { type: Date,   default: null }
+  }
 });
 
 const Vinyl = Item.discriminator('Music', vinylSchema);
