@@ -254,9 +254,19 @@
     }
 
     function submitAs(target) {
-        document.getElementById('inWishlistInput').value = target === 'wishlist' ? 'true' : 'false';
-        document.querySelector('form').submit();
+        const form = document.querySelector('form');
+        const title  = form.querySelector('[name="title"]')?.value || '';
+        const artist = form.querySelector('[name="artist"]')?.value || '';
+
+        const doSubmit = () => {
+            document.getElementById('inWishlistInput').value = target === 'wishlist' ? 'true' : 'false';
+            form.submit();
+        };
+
+        checkDuplicate(title, artist, null, doSubmit);
     }
 </script>
+
+<%- include('partials/duplicate-check') %>
 
 <%- include('partials/footer') %>
