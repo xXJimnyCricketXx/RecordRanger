@@ -57,9 +57,19 @@ router.get('/', requireAuth, async (req, res) => {
                 .reduce((acc, i) => acc + Number(i.quantity || 1), 0);
         };
 
+        const totalValue = allItems.reduce((acc, i) => {
+            const price = i.estimated_price && i.estimated_price.value;
+            return price ? acc + (price * (i.quantity || 1)) : acc;
+        }, 0);
+        const valueCurrency = allItems.find(i => i.estimated_price && i.estimated_price.currency)?.estimated_price?.currency || (res.locals.user.currency || 'USD');
+        const valuedCount = allItems.filter(i => i.estimated_price && i.estimated_price.value).length;
+
         const stats = {
             total: allItems.reduce((acc, i) => acc + (i.quantity || 1), 0),
             vinyl: countByFormat(allItems, 'vinyl'),
+            totalValue,
+            valueCurrency,
+            valuedCount,
         };
 
         const getTop = (items, field) => {
@@ -292,6 +302,19 @@ router.get('/add-vinyl', requireAuth, requireAdmin, (req, res) => {
     const searchType = validTypes.includes(req.query.type) ? req.query.type : 'vinyl';
     const searchQuery = req.query.search || '';
     res.render('add-vinyl', { searchType, searchQuery, currentType: 'add-vinyl' });
+});
+
+// Manual entry page
+router.get('/add-vinyl/manual', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const adminId = await getAdminId();
+        const locations = await Item.distinct('location', { owner: adminId, location: { $ne: "" } });
+        const genres = await Item.distinct('genre', { owner: adminId, genre: { $ne: "" } });
+        res.render('add-manual', { locations, genres, currentType: 'add-vinyl' });
+    } catch (err) {
+        console.error(err);
+        res.redirect('/add-vinyl');
+    }
 });
 
 // route for editing an existing album
@@ -724,8 +747,22 @@ router.get('/api/estimate/:discogsId', requireAuth, async (req, res) => {
     try {
         const discogsId = req.params.discogsId;
         const token = process.env.DISCOGS_TOKEN;
-
         const userCurrency = res.locals.user.currency || 'USD';
+
+        const savePrice = async (priceObj, source) => {
+            try {
+                await Item.updateOne(
+                    { discogs_id: parseInt(discogsId), owner: res.locals.user._id },
+                    { $set: {
+                        'estimated_price.value':      priceObj.value,
+                        'estimated_price.currency':   priceObj.currency || userCurrency,
+                        'estimated_price.source':     source,
+                        'estimated_price.updated_at': new Date()
+                    }},
+                    { strict: false }
+                );
+            } catch (e) { /* save failure is non-critical */ }
+        };
 
         // PLAN A: Active marketplace prices
         try {
@@ -738,10 +775,10 @@ router.get('/api/estimate/:discogsId', requireAuth, async (req, res) => {
 
                 // Verify there's a non-zero lowest price
                 if (statsData.lowest_price && statsData.lowest_price.value > 0) {
-                    // console.log(`💰 Plan A (market) for ID ${discogsId}: ${statsData.lowest_price.value}€`);
+                    await savePrice(statsData.lowest_price, 'market');
                     return res.json({
                         success: true,
-                        source: 'market', // concrete market data
+                        source: 'market',
                         price: statsData.lowest_price,
                         details: `${statsData.num_for_sale} for sale`
                     });
@@ -794,8 +831,6 @@ router.get('/api/estimate/:discogsId', requireAuth, async (req, res) => {
                 const bestPrice = suggData[targetKey];
 
                 if (bestPrice && bestPrice.value > 0) {
-                    // console.log(`📉 Plan B (history) for ID ${discogsId}: ${bestPrice.value}€`);
-
                     let gradeLabel = 'VG+';
                     if (targetKey.toLowerCase().includes('near mint')) gradeLabel = 'NM';
                     else if (targetKey.toLowerCase().includes('mint (m)')) gradeLabel = 'M';
@@ -805,9 +840,10 @@ router.get('/api/estimate/:discogsId', requireAuth, async (req, res) => {
                     else if (targetKey.toLowerCase().includes('fair (f)')) gradeLabel = 'F';
                     else if (targetKey.toLowerCase().includes('poor (p)')) gradeLabel = 'P';
 
+                    await savePrice(bestPrice, 'history');
                     return res.json({
                         success: true,
-                        source: 'history', // historical estimation
+                        source: 'history',
                         price: bestPrice,
                         details: `Based on historical data (${gradeLabel})`
                     });

@@ -129,7 +129,7 @@
             const widgetConfig = {
                 'total': { label: t('stats.total_label'), val: stats.total, unit: t('common.items'), icon: 'fa-database', color: 'bg-primary-theme' },
                 'vinyl': { label: t('media.vinyls'), val: stats.vinyl, icon: 'fa-record-vinyl', color: 'bg-primary-theme' },
-                'value': { label: t('stats.value_label'), val: '—', icon: 'fa-sack-dollar', color: 'bg-primary-theme' },
+                'value': { label: t('stats.value_label'), val: stats.totalValue > 0 ? new Intl.NumberFormat(currentLng === 'de' ? 'de-DE' : 'en-US', { style: 'currency', currency: stats.valueCurrency, maximumFractionDigits: 0 }).format(stats.totalValue) : '—', unit: stats.valuedCount > 0 && stats.valuedCount < stats.total ? `(${stats.valuedCount}/${stats.total})` : null, icon: 'fa-sack-dollar', color: 'bg-primary-theme' },
             };
 
             const topConfigs = {

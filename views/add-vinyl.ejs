@@ -62,14 +62,17 @@
                 <span class="text-xs font-bold uppercase opacity-30"><%= t('add_vinyl.separator_or') %></span>
             </div>
 
-            <div class="flex justify-center mt-3">
+            <div class="flex flex-col sm:flex-row justify-center gap-3 mt-3">
                 <button id="start-scan" type="button"
-                    class="bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 active:scale-95">
+                    class="bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-95">
                     <i class="fa-solid fa-barcode"></i>
-                    <span>
-                        <%= t('add_vinyl.btn_scan') %>
-                    </span>
+                    <span><%= t('add_vinyl.btn_scan') %></span>
                 </button>
+                <a href="<%= baseUrl %>/add-vinyl/manual"
+                    class="bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span><%= t('add_vinyl.btn_manual') || 'Manuell eingeben' %></span>
+                </a>
             </div>
 
             <div id="reader"

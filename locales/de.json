@@ -42,7 +42,10 @@
     "scan_stop": "Stoppen Sie den Scanvorgang",
     "search_placeholder": "Künstler, Album...",
     "separator_or": "ODER",
-    "title": "Fügen Sie einen Datensatz hinzu"
+    "title": "Fügen Sie einen Datensatz hinzu",
+    "btn_manual": "Manuell eingeben",
+    "manual_title": "Manuell hinzufügen",
+    "manual_desc": "Trage alle Felder selbst ein. Die Discogs-ID kannst du später ergänzen."
   },
   "admin": {
     "add_user_btn": "Benutzer hinzufügen",
