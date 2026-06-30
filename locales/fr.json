@@ -161,7 +161,16 @@
     "owned_times": "Possédé {{count}} fois dans la collection",
     "games_total_label": "Total Jeux Vidéo",
     "top_developer_label": "Développeur Favori",
-    "top_game_publisher_label": "Éditeur Favori (Jeux)"
+    "top_game_publisher_label": "Éditeur Favori (Jeux)",
+    "vinyls_label": "Vinyles",
+    "purchase_price": "Prix d'achat",
+    "total_value": "Valeur totale",
+    "genres": "Genres",
+    "top_valuable": "Top 10 les plus précieux",
+    "recent": "Ajouts récents",
+    "by_year": "Vinyles par année de sortie",
+    "condition": "État de la pochette",
+    "no_estimates": "Aucune estimation disponible."
   },
   "modal": {
     "estimate_title": "Estimation en cours...",
