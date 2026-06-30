@@ -652,7 +652,16 @@
     "top_studio_label": "Estudio Favorito",
     "games_total_label": "Total Videojuegos",
     "top_developer_label": "Desarrollador Favorito",
-    "top_game_publisher_label": "Editor Favorito (Juegos)"
+    "top_game_publisher_label": "Editor Favorito (Juegos)",
+    "vinyls_label": "Vinilos",
+    "purchase_price": "Precio de compra",
+    "total_value": "Valor total",
+    "genres": "Géneros",
+    "top_valuable": "Top 10 más valiosos",
+    "recent": "Añadidos recientemente",
+    "by_year": "Vinilos por año de lanzamiento",
+    "condition": "Estado de la funda",
+    "no_estimates": "Aún no hay estimaciones."
   },
   "status": {
     "read": "Leer",

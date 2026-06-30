@@ -161,7 +161,16 @@
     "top_studio_label": "Top Studio",
     "games_total_label": "Total Video Games",
     "top_developer_label": "Top Developer",
-    "top_game_publisher_label": "Top Publisher (Games)"
+    "top_game_publisher_label": "Top Publisher (Games)",
+    "vinyls_label": "Vinyls",
+    "purchase_price": "Purchase Price",
+    "total_value": "Total Value",
+    "genres": "Genres",
+    "top_valuable": "Top 10 Most Valuable",
+    "recent": "Recently Added",
+    "by_year": "Vinyls by Release Year",
+    "condition": "Sleeve Condition",
+    "no_estimates": "No estimates yet."
   },
   "modal": {
     "estimate_title": "Estimating...",

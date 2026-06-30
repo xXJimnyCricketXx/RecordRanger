@@ -192,6 +192,11 @@
                 </a>
               </li>
               <li>
+                <a href="<%= baseUrl %>/stats" target="_blank" class="block px-4 py-2 text-sm text-[var(--text-main)] hover:bg-black/5 dark:hover:bg-white/10 mx-2 rounded transition flex items-center gap-3">
+                  <i class="fa-solid fa-chart-pie w-5 text-center opacity-70"></i> <span><%= t('nav.stats') %></span>
+                </a>
+              </li>
+              <li>
                 <button id="theme-toggle" class="w-[calc(100%-1rem)] text-left block px-4 py-2 text-sm text-[var(--text-main)] hover:bg-black/5 dark:hover:bg-white/10 mx-2 rounded transition flex items-center gap-3">
                     <i id="theme-icon" class="fa-solid fa-moon w-5 text-center"></i> 
                     <span id="theme-text"><%= isDark ? t('nav.theme_light') : t('nav.theme_dark') %></span>

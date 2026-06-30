@@ -652,7 +652,16 @@
     "top_studio_label": "Studio Preferito",
     "games_total_label": "Totale Videogiochi",
     "top_developer_label": "Sviluppatore Preferito",
-    "top_game_publisher_label": "Editore Preferito (Giochi)"
+    "top_game_publisher_label": "Editore Preferito (Giochi)",
+    "vinyls_label": "Vinili",
+    "purchase_price": "Prezzo d'acquisto",
+    "total_value": "Valore totale",
+    "genres": "Generi",
+    "top_valuable": "Top 10 più preziosi",
+    "recent": "Aggiunte recenti",
+    "by_year": "Vinili per anno di uscita",
+    "condition": "Stato della copertina",
+    "no_estimates": "Nessuna stima disponibile."
   },
   "status": {
     "read": "Leggere",

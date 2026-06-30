@@ -556,6 +556,7 @@
     "admin": "Admin-Panel",
     "collection": "Sammlung",
     "home": "Dashboard",
+    "stats": "Statistiken",
     "loading": "Laden...",
     "logout": "Abmelden",
     "settings": "Einstellungen",
@@ -656,7 +657,16 @@
     "top_studio_label": "Lieblingsstudio",
     "games_total_label": "Videospiele Gesamt",
     "top_developer_label": "Top-Entwickler",
-    "top_game_publisher_label": "Top-Publisher (Spiele)"
+    "top_game_publisher_label": "Top-Publisher (Spiele)",
+    "vinyls_label": "Vinyls",
+    "purchase_price": "Kaufpreis",
+    "total_value": "Gesamtwert",
+    "genres": "Genres",
+    "top_valuable": "Top 10 Wertvollste",
+    "recent": "Zuletzt hinzugefügt",
+    "by_year": "Vinyls nach Erscheinungsjahr",
+    "condition": "Zustand der Hülle",
+    "no_estimates": "Noch keine Schätzungen vorhanden."
   },
   "status": {
     "read": "Lesen",
