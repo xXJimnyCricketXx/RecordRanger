@@ -683,6 +683,39 @@ router.get('/api/collection/ids', requireAuth, async (req, res) => {
     }
 });
 
+// Print routes
+router.get('/print/collection', requireAuth, async (req, res) => {
+    try {
+        const adminId = await getAdminId();
+        const items = await Item.find({ owner: adminId, in_wishlist: false })
+            .sort({ artist: 1, title: 1 })
+            .lean();
+        res.render('print', {
+            albums: items.map(formatForView),
+            title: req.t('collection.title'),
+            printDate: new Date().toLocaleDateString(res.locals.currentLng === 'de' ? 'de-DE' : 'en-US')
+        });
+    } catch (err) {
+        res.status(500).send(req.t('errors.generic_server_error'));
+    }
+});
+
+router.get('/print/wishlist', requireAuth, async (req, res) => {
+    try {
+        const adminId = await getAdminId();
+        const items = await Item.find({ owner: adminId, in_wishlist: true })
+            .sort({ artist: 1, title: 1 })
+            .lean();
+        res.render('print', {
+            albums: items.map(formatForView),
+            title: req.t('wishlist.title'),
+            printDate: new Date().toLocaleDateString(res.locals.currentLng === 'de' ? 'de-DE' : 'en-US')
+        });
+    } catch (err) {
+        res.status(500).send(req.t('errors.generic_server_error'));
+    }
+});
+
 router.get('/wishlist', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();

@@ -18,13 +18,21 @@
                 </span>
             </h1>
 
-            <% if (user.isAdmin && user.discogsUsername) { %>
-                <button onclick="refreshCollection()" id="refreshBtn"
-                    class="flex-shrink-0 w-10 h-10 md:w-auto md:h-auto md:p-2.5 card-theme hover:text-primary-theme hover:border-primary-theme rounded-lg transition-all shadow-sm flex items-center justify-center active:scale-95 group"
-                    title="refresh discogs">
-                    <i class="fa-solid fa-sync group-hover:rotate-180 transition-transform duration-500"></i>
-                </button>
+            <div class="flex gap-2">
+                <% if (user.isAdmin && user.discogsUsername) { %>
+                    <button onclick="refreshCollection()" id="refreshBtn"
+                        class="flex-shrink-0 w-10 h-10 card-theme hover:text-primary-theme hover:border-primary-theme rounded-lg transition-all shadow-sm flex items-center justify-center active:scale-95 group"
+                        title="refresh discogs">
+                        <i class="fa-solid fa-sync group-hover:rotate-180 transition-transform duration-500"></i>
+                    </button>
                 <% } %>
+                <a href="<%= baseUrl %>/print/wishlist" target="_blank"
+                    class="flex-shrink-0 w-10 h-10 md:w-auto md:px-4 card-theme hover:text-primary-theme hover:border-primary-theme rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 group"
+                    title="Drucken / Als PDF speichern">
+                    <i class="fa-solid fa-print group-hover:scale-110 transition-transform"></i>
+                    <span class="hidden md:inline text-xs font-bold uppercase tracking-widest">Drucken</span>
+                </a>
+            </div>
 
         </div>
 
