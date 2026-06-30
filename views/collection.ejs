@@ -1,0 +1,969 @@
+<%- include('partials/header') %>
+
+    <div class="max-w-screen-xl mx-auto px-1 md:px-0 pb-12">
+
+        <div class="pt-6 mb-6 flex items-center justify-between">
+            <h1 class="text-3xl font-bold transition-colors flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+                <span>
+                    <%= t('collection.title') %>
+                </span>
+                <span
+                    class="px-3 md:mt-1.5 py-1 bg-black/5 dark:bg-white/10 rounded-full text-sm font-medium opacity-70 w-fit">
+                    <%= totalItems %>
+                        <%= t('common.items') %>
+                </span>
+            </h1>
+            <% if (user.isAdmin) { %>
+                    <div class="flex gap-2">
+
+                        <a href="<%= baseUrl %>/add-vinyl"
+                            class="flex-shrink-0 w-10 h-10 md:w-auto md:px-4 card-theme hover:text-primary-theme hover:border-primary-theme rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 group"
+                            title="<%= t('collection.add') %>">
+                            <i class="fa-solid fa-plus group-hover:scale-110 transition-transform"></i>
+                            <span class="hidden md:inline text-xs font-bold uppercase tracking-widest">
+                                <%= t('collection.add') %>
+                            </span>
+                        </a>
+
+                        <button onclick="openEstimateModal()"
+                            class="flex-shrink-0 w-10 h-10 md:w-auto md:px-4 card-theme hover:text-primary-theme hover:border-primary-theme rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 group"
+                            title="<%= t('index.btn_estimate') %>">
+                            <i
+                                class="fa-solid fa-calculator group-hover:scale-110 transition-transform"></i>
+                            <span class="hidden md:inline text-xs font-bold uppercase tracking-widest">
+                                <%= t('index.btn_estimate') %>
+                            </span>
+                        </button>
+
+                        <% if (user.discogsUsername) { %>
+                            <button onclick="refreshCollection()" id="refreshBtn"
+                                class="flex-shrink-0 w-10 h-10 md:w-auto md:px-4 card-theme hover:text-primary-theme hover:border-primary-theme rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 group"
+                                title="<%= t('collection.refresh_tooltip') %>">
+                                <i
+                                    class="fa-solid fa-sync group-hover:rotate-180 transition-transform duration-500"></i>
+                                <span
+                                    class="hidden md:inline text-xs font-bold uppercase tracking-widest">
+                                    <%= t('collection.refresh') %>
+                                </span>
+                            </button>
+                        <% } %>
+
+                    </div>
+                <% } %>
+
+        </div>
+
+        <div class="space-y-6 mb-8">
+
+            <div class="flex flex-wrap items-center justify-end gap-4">
+                <button onclick="toggleMobileFilters()"
+                    class="sm:hidden flex items-center gap-2 px-4 py-2 rounded-lg card-theme border text-sm font-bold opacity-70 hover:opacity-100 transition-all">
+                    <i class="fa-solid fa-filter"></i>
+                    <%= t('common.filters') %>
+                </button>
+            </div>
+
+            <div id="filterContainer"
+                class="hidden sm:grid lg:flex grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:flex-row gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div class="relative sm:col-span-2 md:col-span-3 lg:flex-grow">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <i class="fa-solid fa-search opacity-40"></i>
+                    </div>
+                    <input type="text" id="filterInput"
+                        class="filter-input-textbox block w-full p-2.5 pl-10 <%= locals.querySearch ? 'pr-8' : '' %> text-sm card-theme rounded-lg border focus:ring-1 focus:ring-primary-theme placeholder-opacity-50 transition-shadow"
+                        value="<%= locals.querySearch || '' %>" placeholder="<%= t('collection.filter_placeholder') %>">
+                    <% if (locals.querySearch) { %>
+                        <button onclick="clearFilterParam('search')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-red-500 transition-colors">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    <% } %>
+                </div>
+
+                <div class="w-full lg:w-44 relative">
+                    <input type="text" id="locationInput" list="locations-list"
+                        placeholder="<%= t('common.location') %>" value="<%= locals.queryLocation || '' %>"
+                        class="filter-input-textbox block w-full p-2.5 <%= locals.queryLocation ? 'pr-8' : '' %> text-sm card-theme rounded-lg border focus:ring-1 focus:ring-primary-theme outline-none placeholder-opacity-50">
+                    <% if (locals.queryLocation) { %>
+                        <button onclick="clearFilterParam('location')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-red-500 transition-colors">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    <% } %>
+                    <datalist id="locations-list">
+                        <% locations.forEach(loc=> { %> <option value="<%= loc %>"></option>
+                            <% }) %>
+                    </datalist>
+                </div>
+
+                <div class="w-full lg:w-36 relative">
+                    <button onclick="toggleDecadeMenu(event)" id="decadeSelectorBtn"
+                        class="block w-full p-2.5 text-sm card-theme rounded-lg border focus:ring-1 focus:ring-primary-theme outline-none transition-all flex justify-between items-center group">
+                        <span class="truncate transition-opacity <%= locals.queryDecade ? '' : 'opacity-50 group-hover:opacity-100' %>">
+                            <% const currentDecadeArr = locals.queryDecade ? locals.queryDecade.split(',') : []; %>
+                            <%= currentDecadeArr.length > 0 ? (currentDecadeArr.length === 1 ? currentDecadeArr[0] + 's' : currentDecadeArr.length + ' ' + t('collection.decade_filter')) : t('collection.decade_filter') %>
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-[10px] opacity-20 group-hover:opacity-60 transition-all"></i>
+                    </button>
+                    <div id="decade-menu" class="hidden absolute left-0 right-0 top-full z-50 mt-2 card-theme rounded-xl p-3 shadow-2xl border border-black/5 dark:border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div class="max-h-[40vh] overflow-y-auto custom-scrollbar space-y-1">
+                            <% const currentYear = new Date().getFullYear(); 
+                               for (let y = Math.floor(currentYear/10)*10; y >= 1950; y -= 10) { 
+                                   const isActive = currentDecadeArr.includes(y.toString());
+                            %>
+                                <label class="flex items-center gap-3 p-2 text-sm rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group">
+                                    <input type="checkbox" class="decade-checkbox accent-primary-theme w-4 h-4 rounded border-gray-300 transition-all cursor-pointer" 
+                                           value="<%= y %>" <%= isActive ? 'checked' : '' %>>
+                                    <span class="group-hover:translate-x-0.5 transition-transform"><%= y %>s</span>
+                                </label>
+                            <% } %>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-black/5 dark:border-white/5 flex gap-2">
+                            <button onclick="clearDecadeCheckboxes()" title="<%= t('common.delete') %>" class="flex-1 py-2 bg-black/5 dark:bg-white/10 rounded-lg hover:brightness-110 transition-all flex items-center justify-center">
+                                <i class="fa-solid fa-trash-can text-xs opacity-75"></i>
+                            </button>
+                            <button onclick="reloadPage()" title="<%= t('common.apply') %>" class="flex-1 py-2 bg-primary-theme text-white rounded-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                    <div class="w-full lg:w-48 relative">
+                        <button onclick="toggleGenreMenu(event)" id="genreSelectorBtn"
+                            class="block w-full p-2.5 text-sm card-theme rounded-lg border focus:ring-1 focus:ring-primary-theme outline-none transition-all flex justify-between items-center group">
+                            <span class="truncate opacity-50 group-hover:opacity-100 transition-opacity">
+                                <%= locals.queryGenre ? (locals.queryGenre.split(',').length + ' ' +
+                                    t('confirm_vinyl.field_genres')) : t('confirm_vinyl.field_genres') %>
+                            </span>
+                            <i class="fa-solid fa-chevron-down text-[10px] opacity-20 group-hover:opacity-60 transition-all"></i>
+                        </button>
+                        <div id="genre-multi-select"
+                            class="hidden absolute left-0 right-0 top-full z-50 mt-2 card-theme rounded-xl p-3 shadow-2xl border border-black/5 dark:border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div class="mb-2 pb-2 border-b border-black/5 dark:border-white/5">
+                                <input type="text" placeholder="<%= t('collection.search_genre_placeholder') %>"
+                                       oninput="filterDropdownList(this, 'genre-checkbox-list')"
+                                       class="w-full p-2 text-xs rounded-lg border card-theme outline-none focus:ring-1 focus:ring-primary-theme placeholder-opacity-50">
+                            </div>
+                            <div id="genre-checkbox-list" class="space-y-1 max-h-[45vh] overflow-y-auto custom-scrollbar">
+                                <% const currentGenreArr=locals.queryGenre ? locals.queryGenre.split(',') : [];
+                                    genres.forEach(gen=> { %>
+                                    <label
+                                        class="flex items-center gap-3 p-2 text-sm rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group">
+                                        <input type="checkbox"
+                                            class="genre-checkbox accent-primary-theme w-4 h-4 rounded border-gray-300 transition-all cursor-pointer"
+                                            value="<%= gen %>" <%=currentGenreArr.includes(gen) ? 'checked' : '' %>>
+                                        <span class="group-hover:translate-x-0.5 transition-transform">
+                                            <%= gen %>
+                                        </span>
+                                    </label>
+                                    <% }); %>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-black/5 dark:border-white/5 flex gap-2">
+                                <button onclick="clearGenreCheckboxes()" title="<%= t('common.delete') %>" class="flex-1 py-2 bg-black/5 dark:bg-white/10 rounded-lg hover:brightness-110 transition-all flex items-center justify-center">
+                                    <i class="fa-solid fa-trash-can text-xs opacity-75"></i>
+                                </button>
+                                <button onclick="reloadPage()" title="<%= t('common.apply') %>"
+                                    class="flex-1 py-2 bg-primary-theme text-white rounded-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center">
+                                    <i class="fa-solid fa-check text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                        <div class="w-full lg:w-48 relative">
+                            <button onclick="toggleStyleMenu(event)" id="styleSelectorBtn"
+                                class="block w-full p-2.5 text-sm card-theme rounded-lg border focus:ring-1 focus:ring-primary-theme outline-none transition-all flex justify-between items-center group">
+                                <span class="truncate opacity-50 group-hover:opacity-100 transition-opacity">
+                                    <%= locals.queryStyle ? (locals.queryStyle.split(',').length + ' ' +
+                                        t('collection.styles_filter')) : t('collection.styles_filter') %>
+                                </span>
+                                <i class="fa-solid fa-chevron-down text-[10px] opacity-20 group-hover:opacity-60 transition-all"></i>
+                            </button>
+                            <div id="style-multi-select"
+                                class="hidden absolute left-0 right-0 top-full z-50 mt-2 card-theme rounded-xl p-3 shadow-2xl border border-black/5 dark:border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div class="mb-2 pb-2 border-b border-black/5 dark:border-white/5">
+                                    <input type="text" placeholder="<%= t('collection.search_style_placeholder') %>"
+                                           oninput="filterDropdownList(this, 'style-checkbox-list')"
+                                           class="w-full p-2 text-xs rounded-lg border card-theme outline-none focus:ring-1 focus:ring-primary-theme placeholder-opacity-50">
+                                </div>
+                                <div id="style-checkbox-list" class="space-y-1 max-h-[45vh] overflow-y-auto custom-scrollbar">
+                                    <% const currentStyleArr = locals.queryStyle ? locals.queryStyle.split(',') : [];
+                                        styles.forEach(sty => { %>
+                                        <label class="flex items-center gap-3 p-2 text-sm rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group">
+                                            <input type="checkbox"
+                                                class="style-checkbox accent-primary-theme w-4 h-4 rounded border-gray-300 transition-all cursor-pointer"
+                                                value="<%= sty %>" <%= currentStyleArr.includes(sty) ? 'checked' : '' %>>
+                                            <span class="group-hover:translate-x-0.5 transition-transform">
+                                                <%= sty %>
+                                            </span>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                                <div class="mt-3 pt-3 border-t border-black/5 dark:border-white/5 flex gap-2">
+                                    <button onclick="clearStyleCheckboxes()" title="<%= t('common.delete') %>" class="flex-1 py-2 bg-black/5 dark:bg-white/10 rounded-lg hover:brightness-110 transition-all flex items-center justify-center">
+                                        <i class="fa-solid fa-trash-can text-xs opacity-75"></i>
+                                    </button>
+                                    <button onclick="reloadPage()" title="<%= t('common.apply') %>"
+                                        class="flex-1 py-2 bg-primary-theme text-white rounded-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center">
+                                        <i class="fa-solid fa-check text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                <div class="w-full lg:w-44 relative">
+                    <div class="relative">
+                        <input type="text" id="artistInput" placeholder="<%= t('collection.artist_filter') %>"
+                            value="<%= locals.queryArtist || '' %>" autocomplete="off"
+                            class="filter-input-textbox block w-full p-2.5 <%= locals.queryArtist ? 'pr-8' : '' %> text-sm card-theme rounded-lg border focus:ring-1 focus:ring-primary-theme outline-none placeholder-opacity-50">
+                        <% if (locals.queryArtist) { %>
+                            <button onclick="clearFilterParam('artist')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-red-500 transition-colors">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            </button>
+                        <% } %>
+                        <div id="artistAutocomplete"
+                            class="hidden absolute left-0 right-0 top-full z-50 mt-1 card-theme rounded-xl shadow-2xl border border-black/5 dark:border-white/10 max-h-[40vh] overflow-y-auto custom-scrollbar">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full lg:w-48 relative">
+                    <button onclick="toggleSortMenu(event)" id="sortSelectorBtn"
+                        class="block w-full p-2.5 text-sm card-theme rounded-lg border focus:ring-1 focus:ring-primary-theme outline-none transition-all flex justify-between items-center group">
+                        <span class="truncate opacity-50 group-hover:opacity-100 transition-opacity"
+                            id="sortLabel">
+                            <%= t('collection.sort_label') %>
+                        </span>
+                        <i
+                            class="fa-solid fa-arrow-down-short-wide text-[12px] opacity-20 group-hover:opacity-60 transition-all"></i>
+                    </button>
+                    <div id="sort-menu"
+                        class="hidden absolute left-0 right-0 top-full z-50 mt-2 card-theme rounded-xl p-2 shadow-2xl border border-black/5 dark:border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <% const sortOptions=[ { key: 'added' , label: t('collection.sort_added'), descFirst:
+                            true }, { key: 'title' , label: t('collection.sort_title'), descFirst: false }, {
+                            key: 'year' , label: t('collection.sort_year'), descFirst: true }, ]; %>
+                            <% sortOptions.forEach(opt=> {
+                                const isActive = currentSort.startsWith(opt.key);
+                                const currentDir = isActive ? (currentSort.endsWith('_asc') ? 'asc' :
+                                'desc') : (opt.descFirst ? 'desc' : 'asc');
+                                %>
+                                <button
+                                    onclick="handleSort('<%= opt.key %>', '<%= currentDir %>', <%= opt.descFirst %>)"
+                                    class="w-full flex items-center justify-between gap-2 p-2.5 text-sm rounded-lg transition-all cursor-pointer
+                                            <%= isActive ? 'bg-primary-theme/10 text-primary-theme font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100' %>">
+                                    <span>
+                                        <%= opt.label %>
+                                    </span>
+                                    <% if (isActive) { %>
+                                        <i
+                                            class="fa-solid fa-arrow-<%= currentDir === 'asc' ? 'up' : 'down' %> text-[11px]"></i>
+                                        <% } %>
+                                </button>
+                                <% }); %>
+                                        <% const artistActive=currentSort.startsWith('artist'); const
+                                            artistDir=artistActive ? (currentSort.endsWith('_asc') ? 'asc'
+                                            : 'desc' ) : 'asc' ; %>
+                                            <button onclick="handleSort('artist', '<%= artistDir %>', false)"
+                                                class="w-full flex items-center justify-between gap-2 p-2.5 text-sm rounded-lg transition-all cursor-pointer
+                                            <%= artistActive ? 'bg-primary-theme/10 text-primary-theme font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100' %>">
+                                                <span>
+                                                    <%= t('collection.sort_artist') %>
+                                                </span>
+                                                <% if (artistActive) { %>
+                                                    <i
+                                                        class="fa-solid fa-arrow-<%= artistDir === 'asc' ? 'up' : 'down' %> text-[11px]"></i>
+                                                    <% } %>
+                                            </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 w-full lg:w-auto">
+                    <div class="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg h-10 items-center">
+                        <button onclick="setFilterMode('show')" 
+                            title="<%= t('collection.filter_mode_show') %>"
+                            class="w-10 h-8 flex items-center justify-center rounded-md transition-all <%= (locals.queryFilterMode !== 'hide') ? 'bg-white dark:bg-white/20 shadow-sm text-primary-theme' : 'opacity-40 hover:opacity-100' %>">
+                            <i class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                        <button onclick="setFilterMode('hide')" 
+                            title="<%= t('collection.filter_mode_hide') %>"
+                            class="w-10 h-8 flex items-center justify-center rounded-md transition-all <%= (locals.queryFilterMode === 'hide') ? 'bg-red-500 text-white shadow-sm' : 'opacity-40 hover:opacity-100' %>">
+                            <i class="fa-solid fa-eye-slash text-xs"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="w-12">
+                        <button onclick="reloadPage()"
+                            class="block w-full h-10 flex items-center justify-center rounded-lg border hover:text-primary-theme hover:border-primary-theme card-theme transition-all bg-primary-theme/5">
+                            <i class="fa-solid fa-magnifying-glass opacity-60"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Filter Badges/Pills -->
+            <% 
+                const activePills = [];
+                if (locals.querySearch) activePills.push({ key: 'search', label: t('collection.filter_placeholder') + ': "' + locals.querySearch + '"' });
+                if (locals.queryLocation) activePills.push({ key: 'location', label: t('common.location') + ': "' + locals.queryLocation + '"' });
+                if (locals.queryArtist) activePills.push({ key: 'artist', label: t('collection.artist_filter') + ': "' + locals.queryArtist + '"' });
+                
+                if (locals.queryDecade) {
+                    activePills.push({ key: 'decade', label: t('collection.decade_filter') + ': ' + locals.queryDecade.split(',').map(d => d + 's').join(', ') });
+                }
+                if (locals.queryGenre) {
+                    activePills.push({ key: 'genre', label: t('confirm_vinyl.field_genres') + ': ' + locals.queryGenre.split(',').join(', ') });
+                }
+                if (locals.queryStyle) {
+                    activePills.push({ key: 'style', label: t('collection.styles_filter') + ': ' + locals.queryStyle.split(',').join(', ') });
+                }
+            %>
+
+            <% if (activePills.length > 0) { %>
+                <div class="flex flex-wrap items-center gap-2 mt-4 text-xs animate-in fade-in duration-200">
+                    <span class="opacity-60 font-semibold"><%= t('collection.active_filters') %></span>
+                    <% activePills.forEach(pill => { %>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-theme/10 text-primary-theme font-semibold border border-primary-theme/20 shadow-sm transition-all hover:bg-primary-theme/20">
+                            <%= pill.label %>
+                            <button onclick="clearFilterParam('<%= pill.key %>')" class="hover:text-red-500 font-bold ml-1 text-sm focus:outline-none transition-colors" title="<%= t('common.delete') %>">&times;</button>
+                        </span>
+                    <% }) %>
+                    <button onclick="clearAllFilters()" class="text-xs text-red-500 hover:text-red-600 font-bold ml-2 underline transition-colors cursor-pointer">
+                        <%= t('collection.clear_all') %>
+                    </button>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6" id="albumGrid">
+            <% albums.forEach(album=> { %>
+                <% const detailUrl=`/album/${album._id}`; %>
+
+                    <div class="album-card group relative card-theme rounded-xl overflow-hidden hover:border-primary-theme transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                        data-location="<%= album.location || '' %>"
+                        data-format="<%= album.media_type || album.format || '' %>">
+                        <a href="<%= baseUrl + detailUrl %>" class="block">
+                            <div
+                                class="aspect-square w-full relative overflow-hidden bg-black/5 flex items-center justify-center">
+
+                                <img src="<%= album.cover_image %>"
+                                    class="relative z-10 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    loading="lazy">
+
+                                <span
+                                    class="absolute bottom-2 left-2 z-20 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md border border-white/10 shadow-sm bg-[#ff89a9]/90">
+                                    <%= t('media.vinyl') %>
+                                </span>
+                            </div>
+
+                            <div class="p-3">
+                                <h3 class="font-bold text-sm truncate" title="<%= album.title %>">
+                                    <%= album.title %>
+                                </h3>
+                                <p class="text-xs opacity-60 truncate mb-2">
+                                    <%= album.artist || 'Inconnu' %>
+                                </p>
+
+                                <% if(album.format_type || album.variant_color) { 
+                                    let cleanedFormat = '';
+                                    if (album.format_type) {
+                                        cleanedFormat = album.format_type
+                                            .split(',')
+                                            .map(s => s.trim())
+                                            .filter(s => !['vinyl', 'album', 'reissue', 'repress', 'cd', 'cassette'].includes(s.toLowerCase()))
+                                            .join(', ');
+                                        if (!cleanedFormat) cleanedFormat = album.format_type;
+                                    }
+                                %>
+                                    <div class="flex items-center gap-1.5 mt-1 min-w-0 overflow-hidden">
+                                        <% if(cleanedFormat) { %>
+                                            <span class="text-[9px] md:text-[10px] opacity-60 bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded border border-transparent truncate max-w-[50%] font-medium transition-colors" title="<%= album.format_type %>">
+                                                <%= cleanedFormat %>
+                                            </span>
+                                        <% } %>
+                                        <% if(album.variant_color) { %>
+                                            <div class="flex items-center gap-1 min-w-0 truncate" title="<%= album.variant_color %>">
+                                                <span
+                                                    class="w-1.5 h-1.5 rounded-full bg-primary-theme inline-block flex-shrink-0"></span>
+                                                <span class="text-[9px] md:text-[10px] opacity-60 truncate">
+                                                    <%= album.variant_color %>
+                                                </span>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </a>
+                    </div>
+                    <% }) %>
+        </div>
+
+        <div
+            class="mt-12 flex flex-col md:flex-row items-center justify-between gap-6 border-t border-black/5 dark:border-white/10 pt-8">
+
+            <div class="flex items-center gap-3 order-2 md:order-1">
+                <span class="text-xs font-bold uppercase tracking-widest opacity-40">
+                    <%= t('common.show') %>
+                </span>
+                <div class="flex bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+                    <% [25, 50, 100].forEach(num=> { %>
+                        <button onclick="currentLimit = <%= num %>; reloadPage();"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all <%= (locals.queryLimit == num) ? 'bg-primary-theme text-white shadow-md' : 'opacity-50 hover:opacity-100' %>">
+                            <%= num %>
+                        </button>
+                        <% }) %>
+                </div>
+            </div>
+
+            <% if (totalPages> 1) { %>
+                <nav class="flex items-center gap-2 order-1 md:order-2">
+                    <button onclick="changePage(<%= currentPage - 1 %>)" <%=currentPage <=1 ? 'disabled' : '' %>
+                        class="w-10 h-10 flex items-center justify-center rounded-xl card-theme border-none
+                        hover:bg-primary-theme hover:text-white transition-all disabled:opacity-20
+                        disabled:pointer-events-none">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                    </button>
+
+                    <div class="flex items-center gap-1">
+                        <% for(let i=1; i <=totalPages; i++) { if (i===1 || i===totalPages || (i>= currentPage - 1 && i
+                            <= currentPage + 1)) { %>
+                                <button onclick="changePage(<%= i %>)"
+                                    class="w-10 h-10 flex items-center justify-center rounded-xl font-bold text-sm transition-all <%= currentPage === i ? 'bg-primary-theme text-white shadow-lg scale-110' : 'card-theme hover:bg-black/5 dark:hover:bg-white/5' %>">
+                                    <%= i %>
+                                </button>
+                                <% } else if (i===currentPage - 2 || i===currentPage + 2) { %>
+                                    <span class="px-1 opacity-30">...</span>
+                                    <% } } %>
+                    </div>
+
+                    <button onclick="changePage(<%= currentPage + 1 %>)" <%=currentPage>= totalPages ? 'disabled' : ''
+                        %>
+                        class="w-10 h-10 flex items-center justify-center rounded-xl card-theme border-none
+                        hover:bg-primary-theme hover:text-white transition-all disabled:opacity-20
+                        disabled:pointer-events-none">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                </nav>
+                <% } %>
+        </div>
+    </div>
+
+    <div id="estimateModal"
+        class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="card-theme rounded-2xl w-full max-w-lg p-6 md:p-8 shadow-2xl relative">
+            <button onclick="closeEstimateModal()" class="absolute top-4 right-4 opacity-50 hover:opacity-100">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <h3 class="text-2xl font-bold mb-2">
+                <%= t('modal.estimate_title') %>
+            </h3>
+            <p class="opacity-60 text-sm mb-6">
+                <%= t('modal.estimate_desc') %>
+            </p>
+
+            <div id="progressContainer" class="mb-6">
+                <div class="w-full bg-gray-200 dark:bg-black/30 rounded-full h-4 mb-2 overflow-hidden">
+                    <div id="estimateProgress" class="bg-primary-theme h-4 rounded-full transition-all duration-300"
+                        style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-xs opacity-60 font-mono">
+                    <span id="estimateCount">0 / --</span>
+                    <span id="estimatePercent">0%</span>
+                </div>
+            </div>
+
+            <div id="estimateResult" class="hidden text-center space-y-4">
+                <div class="p-6 bg-primary-theme/10 border border-primary-theme/30 rounded-xl">
+                    <p class="text-primary-theme text-sm font-bold uppercase tracking-wider mb-1">
+                        <%= t('modal.avg_label') %>
+                    </p>
+                    <h4 id="finalPrice" class="text-4xl md:text-5xl font-black">--</h4>
+                    <p class="text-xs opacity-60 mt-2">
+                        <%= t('modal.condition_hint') %>
+                    </p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-100 dark:bg-black/20 p-3 rounded-lg">
+                        <span class="opacity-60 block text-[10px] uppercase font-bold">
+                            <%= t('modal.min_label') %>
+                        </span>
+                        <span id="minPrice" class="font-bold text-lg">--</span>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-black/20 p-3 rounded-lg">
+                        <span class="opacity-60 block text-[10px] uppercase font-bold">
+                            <%= t('modal.max_label') %>
+                        </span>
+                        <span id="maxPrice" class="font-bold text-lg">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="startEstimateBtn" class="mt-6 text-center">
+                <button onclick="startEstimation()"
+                    class="bg-primary-theme hover:brightness-110 text-white font-bold py-3 px-8 rounded-xl transition-colors">
+                    <%= t('modal.start_btn') %>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="<%= baseUrl %>/socket.io/socket.io.js"></script>
+    <script>
+        let currentSort = '<%= currentSort %>';
+        const filterInput = document.getElementById('filterInput');
+        const locationInput = document.getElementById('locationInput');
+        const artistInput = document.getElementById('artistInput');
+        let currentLimit = <%= locals.queryLimit %>;
+        let currentDecade = '<%= locals.queryDecade || "" %>';
+        let currentStyle = '<%= locals.queryStyle || "" %>';
+        let currentFilterMode = '<%= locals.queryFilterMode || "show" %>';
+
+        function setFilterMode(mode) {
+            currentFilterMode = mode;
+            reloadPage();
+        }
+
+        function toggleMobileFilters() {
+            const container = document.getElementById('filterContainer');
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                container.classList.add('grid');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function reloadPage() {
+            const url = new URL(window.location.origin + window.location.pathname);
+
+            validateAndSetUrlSearchParamString('search', filterInput?.value);
+            validateAndSetUrlSearchParamString('location', locationInput?.value);
+
+            {
+                const genreMenu = document.getElementById('genre-multi-select');
+                if (genreMenu) {
+                    const checkedGenres = [...genreMenu.querySelectorAll('.genre-checkbox:checked')].map(cb => cb.value);
+                    if (checkedGenres.length) url.searchParams.set('genre', checkedGenres.join(','));
+                }
+            }
+
+            {
+                const styleMenu = document.getElementById('style-multi-select');
+                if (styleMenu) {
+                    const checkedStyles = [...styleMenu.querySelectorAll('.style-checkbox:checked')].map(cb => cb.value);
+                    if (checkedStyles.length) url.searchParams.set('style', checkedStyles.join(','));
+                }
+            }
+
+            const decadeMenu = document.getElementById('decade-menu');
+            if (decadeMenu) {
+                const checkedDecades = [...decadeMenu.querySelectorAll('.decade-checkbox:checked')].map(cb => cb.value);
+                if (checkedDecades.length) url.searchParams.set('decade', checkedDecades.join(','));
+            }
+
+            validateAndSetUrlSearchParamString('limit', currentLimit);
+            validateAndSetUrlSearchParamString('sort', currentSort);
+            validateAndSetUrlSearchParamString('artist', artistInput?.value);
+            validateAndSetUrlSearchParamString('filterMode', currentFilterMode);
+
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+
+            function validateAndSetUrlSearchParamString(key, value) {
+                if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) return;
+                if ((typeof value === "string")) value = value.trim();
+                url.searchParams.set(key, value);
+            }
+        }
+
+        function changePage(page) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', page);
+            window.location.href = url.toString();
+        }
+
+        document.querySelectorAll('.filter-input-textbox').forEach(element => {
+            element.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                reloadPage();
+            });
+        });
+
+        function clearFilterParam(key) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete(key);
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+        }
+
+        function clearAllFilters() {
+            const url = new URL(window.location.origin + window.location.pathname);
+            const sort = new URLSearchParams(window.location.search).get('sort');
+            const limit = new URLSearchParams(window.location.search).get('limit');
+            const filterMode = new URLSearchParams(window.location.search).get('filterMode');
+
+            if (sort) url.searchParams.set('sort', sort);
+            if (limit) url.searchParams.set('limit', limit);
+            if (filterMode) url.searchParams.set('filterMode', filterMode);
+            
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+        }
+
+        function clearDecadeCheckboxes() {
+            const decadeMenu = document.getElementById('decade-menu');
+            if (decadeMenu) {
+                decadeMenu.querySelectorAll('.decade-checkbox').forEach(cb => cb.checked = false);
+            }
+            reloadPage();
+        }
+
+        function clearGenreCheckboxes() {
+            const genreMenu = document.getElementById('genre-multi-select');
+            if (genreMenu) {
+                genreMenu.querySelectorAll('.genre-checkbox').forEach(cb => cb.checked = false);
+            }
+            reloadPage();
+        }
+
+        function clearStyleCheckboxes() {
+            const styleMenu = document.getElementById('style-multi-select');
+            if (styleMenu) {
+                styleMenu.querySelectorAll('.style-checkbox').forEach(cb => cb.checked = false);
+            }
+            reloadPage();
+        }
+
+        function filterDropdownList(inputElement, listId) {
+            const filter = inputElement.value.toLowerCase();
+            const container = document.getElementById(listId);
+            if (!container) return;
+            const labels = container.getElementsByTagName('label');
+            for (let i = 0; i < labels.length; i++) {
+                const span = labels[i].querySelector('span');
+                if (span) {
+                    const text = span.textContent || span.innerText;
+                    if (text.toLowerCase().indexOf(filter) > -1) {
+                        labels[i].style.display = "";
+                    } else {
+                        labels[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
+        function toggleGenreMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('genre-multi-select');
+            const btn = document.getElementById('genreSelectorBtn');
+            closeAllMenusExcept('genre');
+
+            const isHidden = menu.classList.contains('hidden');
+            menu.classList.toggle('hidden');
+            if (!isHidden) {
+                btn.classList.remove('ring-1', 'ring-primary-theme', 'border-primary-theme');
+            } else {
+                btn.classList.add('ring-1', 'ring-primary-theme', 'border-primary-theme');
+            }
+        }
+
+        function toggleStyleMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('style-multi-select');
+            const btn = document.getElementById('styleSelectorBtn');
+            closeAllMenusExcept('style');
+
+            const isHidden = menu.classList.contains('hidden');
+            menu.classList.toggle('hidden');
+            if (!isHidden) {
+                btn.classList.remove('ring-1', 'ring-primary-theme', 'border-primary-theme');
+            } else {
+                btn.classList.add('ring-1', 'ring-primary-theme', 'border-primary-theme');
+            }
+        }
+
+        function toggleDecadeMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('decade-menu');
+            const btn = document.getElementById('decadeSelectorBtn');
+            closeAllMenusExcept('decade');
+
+            const isHidden = menu.classList.contains('hidden');
+            menu.classList.toggle('hidden');
+            if (!isHidden) {
+                btn.classList.remove('ring-1', 'ring-primary-theme', 'border-primary-theme');
+            } else {
+                btn.classList.add('ring-1', 'ring-primary-theme', 'border-primary-theme');
+            }
+        }
+
+        function toggleSortMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('sort-menu');
+            const btn = document.getElementById('sortSelectorBtn');
+            closeAllMenusExcept('sort');
+
+            const isHidden = menu.classList.contains('hidden');
+            menu.classList.toggle('hidden');
+            if (!isHidden) {
+                btn.classList.remove('ring-1', 'ring-primary-theme', 'border-primary-theme');
+            } else {
+                btn.classList.add('ring-1', 'ring-primary-theme', 'border-primary-theme');
+            }
+        }
+
+        function closeAllMenusExcept(except) {
+            const menus = [
+                { id: 'genre-multi-select', btnId: 'genreSelectorBtn' },
+                { id: 'style-multi-select', btnId: 'styleSelectorBtn' },
+                { id: 'sort-menu', btnId: 'sortSelectorBtn' },
+                { id: 'decade-menu', btnId: 'decadeSelectorBtn' },
+            ];
+            menus.forEach(({ id, btnId }) => {
+                if (id.startsWith(except)) return;
+                const menu = document.getElementById(id);
+                const btn = document.getElementById(btnId);
+                if (menu) menu.classList.add('hidden');
+                if (btn) btn.classList.remove('ring-1', 'ring-primary-theme', 'border-primary-theme');
+            });
+        }
+
+        function handleSort(key, currentDir, descFirst) {
+            const isAlreadyActive = currentSort.startsWith(key);
+            if (isAlreadyActive) {
+                currentSort = key + '_' + (currentDir === 'asc' ? 'desc' : 'asc');
+            } else {
+                currentSort = key + '_' + (descFirst ? 'desc' : 'asc');
+            }
+            reloadPage();
+        }
+
+        document.addEventListener('click', (e) => {
+            const menuConfigs = [
+                { menuId: 'genre-multi-select', btnId: 'genreSelectorBtn' },
+                { menuId: 'style-multi-select', btnId: 'styleSelectorBtn' },
+                { menuId: 'sort-menu', btnId: 'sortSelectorBtn' },
+                { menuId: 'decade-menu', btnId: 'decadeSelectorBtn' },
+            ];
+            menuConfigs.forEach(({ menuId, btnId }) => {
+                const menu = document.getElementById(menuId);
+                const btn = document.getElementById(btnId);
+                if (!menu || menu.classList.contains('hidden')) return;
+                if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                    menu.classList.add('hidden');
+                    if (btn) btn.classList.remove('ring-1', 'ring-primary-theme', 'border-primary-theme');
+                }
+            });
+
+            const acMenu = document.getElementById('artistAutocomplete');
+            const acInput = document.getElementById('artistInput');
+            if (acMenu && !acMenu.contains(e.target) && e.target !== acInput) {
+                acMenu.classList.add('hidden');
+            }
+        });
+
+        ['genre-multi-select', 'style-multi-select', 'sort-menu', 'decade-menu'].forEach(id => {
+            const menu = document.getElementById(id);
+            if (menu) {
+                menu.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+        });
+
+        // Artist autocomplete
+        const allArtists = <%- JSON.stringify(artistList || []) %>;
+        const artistAutocompleteEl = document.getElementById('artistAutocomplete');
+
+        if (artistInput && artistAutocompleteEl) {
+            artistInput.addEventListener('input', () => {
+                const val = artistInput.value.trim().toLowerCase();
+                if (val.length < 1) {
+                    artistAutocompleteEl.classList.add('hidden');
+                    return;
+                }
+                const matches = allArtists.filter(a => a.toLowerCase().includes(val)).slice(0, 15);
+                if (matches.length === 0) {
+                    artistAutocompleteEl.classList.add('hidden');
+                    return;
+                }
+                artistAutocompleteEl.innerHTML = matches.map(m =>
+                    `<button type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-primary-theme/10 hover:text-primary-theme transition-colors cursor-pointer truncate"
+                        onclick="selectArtist('${m.replace(/'/g, "\\'")}')">${m}</button>`
+                ).join('');
+                artistAutocompleteEl.classList.remove('hidden');
+            });
+
+            artistInput.addEventListener('focus', () => {
+                if (artistInput.value.trim().length >= 1) {
+                    artistInput.dispatchEvent(new Event('input'));
+                }
+            });
+        }
+
+        function selectArtist(name) {
+            artistInput.value = name;
+            artistAutocompleteEl.classList.add('hidden');
+            reloadPage();
+        }
+    
+
+    <% if (user.isAdmin) { %>
+        const socket = io({
+            path: '<%= baseUrl %>/socket.io',
+        });
+
+            async function refreshCollection() {
+                const btn = document.getElementById('refreshBtn');
+                const icon = btn.querySelector('i');
+                icon.classList.add('fa-spin');
+                btn.disabled = true;
+
+                socket.once('import_finished', () => window.location.reload());
+                socket.once('import_error', (data) => {
+                    alert("Erreur : " + data.message);
+                    icon.classList.remove('fa-spin');
+                    btn.disabled = false;
+                });
+
+                try {
+                    const isWishlist = window.location.pathname.includes('wishlist');
+                    await fetch('<%= baseUrl %>/import/discogs', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            discogsUrl: `https://www.discogs.com/user/<%= user.discogsUsername %>`,
+                            full: false,
+                            type: isWishlist ? 'wishlist' : 'collection'
+                        })
+                    });
+                } catch (e) {
+                    icon.classList.remove('fa-spin');
+                    btn.disabled = false;
+                }
+            }
+    <% } %>
+
+    const modal = document.getElementById('estimateModal');
+        const startBtn = document.getElementById('startEstimateBtn');
+        const resultDiv = document.getElementById('estimateResult');
+        const progressBar = document.getElementById('estimateProgress');
+        const countSpan = document.getElementById('estimateCount');
+        const percentSpan = document.getElementById('estimatePercent');
+        const estimateErrorMsg = "<%= t('messages.estimate_error') %>";
+        const currentLocale = '<%= currentLng === "fr" ? "fr-FR" : "en-US" %>';
+        const currentCurrency = '<%= user.currency || "USD" %>';
+
+        let totalAlbums = 0;
+        let currentProcessed = 0;
+        let totalPriceVG = 0;
+        let totalPriceMin = 0;
+        let totalPriceMax = 0;
+
+        function openEstimateModal() {
+            modal.classList.remove('hidden');
+        }
+
+        function closeEstimateModal() {
+            modal.classList.add('hidden');
+        }
+
+        async function startEstimation() {
+            startBtn.classList.add('hidden');
+            try {
+                const res = await fetch('<%= baseUrl %>/api/collection/ids?type=music');
+                const data = await res.json();
+
+                if (!data.success) throw new Error("Server Error");
+
+                const albumsToEstimate = data.albums;
+                totalAlbums = albumsToEstimate.length;
+                currentProcessed = 0;
+                totalPriceVG = 0;
+                totalPriceMin = 0;
+                totalPriceMax = 0;
+
+                countSpan.innerText = `0 / ${totalAlbums}`;
+
+                for (const album of albumsToEstimate) {
+                    await estimateOneAlbum(album.discogs_id, album.quantity || 1);
+                    currentProcessed++;
+
+                    const percent = Math.round((currentProcessed / totalAlbums) * 100);
+                    if (progressBar) progressBar.style.width = percent + '%';
+                    if (percentSpan) percentSpan.innerText = percent + '%';
+
+                    if (countSpan) countSpan.innerText = `${currentProcessed} / ${totalAlbums}`;
+
+                    await new Promise(r => setTimeout(r, 500));
+                }
+                showResults();
+            } catch (err) {
+                alert(`${estimateErrorMsg} : ${err.message}`);
+                startBtn.classList.remove('hidden');
+            }
+        }
+
+        async function estimateOneAlbum(id, quantity) {
+            try {
+                const res = await fetch(`<%= baseUrl %>/api/estimate/${id}`);
+                const data = await res.json();
+                if (data.success && data.price) {
+                    const val = data.price.value * quantity;
+                    totalPriceVG += val;
+                    totalPriceMin += val;
+                    totalPriceMax += (val * 1.3);
+                }
+            } catch (e) { }
+        }
+
+        function showResults() {
+            const fmt = (val) => {
+                try {
+                    return new Intl.NumberFormat(currentLocale, {
+                        style: 'currency',
+                        currency: currentCurrency
+                    }).format(val);
+                } catch (e) {
+                    return val.toFixed(2) + ' ' + currentCurrency;
+                }
+            };
+
+            document.getElementById('finalPrice').innerText = fmt(totalPriceVG);
+            document.getElementById('minPrice').innerText = fmt(totalPriceMin);
+            document.getElementById('maxPrice').innerText = fmt(totalPriceMax);
+
+            document.getElementById('progressContainer').classList.add('hidden');
+            resultDiv.classList.remove('hidden');
+        }
+        function toggleDecadeMenu(e) {
+            e.stopPropagation();
+            const menuConfigs = [
+                { menuId: 'genre-multi-select', btnId: 'genreSelectorBtn' },
+                { menuId: 'sort-menu', btnId: 'sortSelectorBtn' },
+                { menuId: 'decade-menu', btnId: 'decadeSelectorBtn' },
+            ];
+            
+            const thisMenu = document.getElementById('decade-menu');
+            const thisBtn = document.getElementById('decadeSelectorBtn');
+            const isHidden = thisMenu.classList.contains('hidden');
+            
+            menuConfigs.forEach(({ menuId, btnId }) => {
+                const menu = document.getElementById(menuId);
+                const btn = document.getElementById(btnId);
+                if (menu && !menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                    if (btn) btn.classList.remove('ring-1', 'ring-primary-theme', 'border-primary-theme');
+                }
+            });
+            
+            if (isHidden) {
+                thisMenu.classList.remove('hidden');
+                if (thisBtn) thisBtn.classList.add('ring-1', 'ring-primary-theme', 'border-primary-theme');
+            }
+        }
+
+
+    </script>
+    <%- include('partials/footer') %>
+</body>
+</html>

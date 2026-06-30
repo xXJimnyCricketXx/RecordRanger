@@ -1,0 +1,44 @@
+</main>
+
+<footer class="mt-auto footer-custom transition-colors duration-300">
+    <div class="max-w-screen-xl mx-auto py-8 px-4">
+        <div class="flex flex-col items-center justify-center space-y-4">
+
+            <div class="flex items-center gap-2 transition-colors">
+                <img src="<%= baseUrl %>/ressources/recordranger-logo-dark.png" alt="RecordRanger!" class="w-36 h-auto">
+            </div>
+
+            <div class="text-center">
+                <p class="text-sm font-bold text-[#f1efe9]">
+                    RecordRanger! - v<%= appVersion %>
+                </p>
+            </div>
+
+        </div>
+    </div>
+</footer>
+
+<script>
+    window.addEventListener('load', function () {
+        const loader = document.getElementById('page-loader');
+        if (loader) {
+            loader.classList.add('opacity-0');
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 500);
+        }
+    });
+
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('<%= baseUrl %>/sw.js')
+                .then(reg => console.log('[SW] saved', reg.scope))
+                .catch(err => console.warn('[SW] error:', err));
+        });
+    }
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,77 @@
+const CACHE_NAME = 'recordranger-v1.0';
+
+const STATIC_ASSETS = [
+  '<%= baseUrl %>/',
+  '<%= baseUrl %>/styles/tailwind.css',
+  '<%= baseUrl %>/manifest.json',
+  '<%= baseUrl %>/ressources/icone-192.png',
+  '<%= baseUrl %>/ressources/icone-512.png'
+];
+
+
+self.addEventListener('install', event => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('[SW] Caching static assets');
+      return cache.addAll(STATIC_ASSETS);
+    })
+  );
+});
+
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames =>
+      Promise.all(
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', cache);
+            return caches.delete(cache);
+          }
+        })
+      )
+    )
+  );
+  return self.clients.claim();
+});
+
+
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+
+  if (event.request.method !== 'GET') return;
+
+  const dynamicRoutes = [
+    // Auth
+    '<%= baseUrl %>/login', '<%= baseUrl %>/logout', '<%= baseUrl %>/setup',
+    // Collections
+    '<%= baseUrl %>/collection', '<%= baseUrl %>/wishlist',
+    '<%= baseUrl %>/album/', '<%= baseUrl %>/book/', '<%= baseUrl %>/dvd/', '<%= baseUrl %>/game/',
+    // Add / confirmation
+    '<%= baseUrl %>/add-vinyl', '<%= baseUrl %>/add-book', '<%= baseUrl %>/add-dvd', '<%= baseUrl %>/add-game',
+    '<%= baseUrl %>/confirm-vinyl/', '<%= baseUrl %>/confirm-dvd/', '<%= baseUrl %>/confirm-book/', '<%= baseUrl %>/confirm-game/',
+    '<%= baseUrl %>/save-vinyl', '<%= baseUrl %>/save-book', '<%= baseUrl %>/save-dvd', '<%= baseUrl %>/save-game',
+    // Edition
+    '<%= baseUrl %>/album/edit/', '<%= baseUrl %>/book/edit/', '<%= baseUrl %>/dvd/edit/', '<%= baseUrl %>/game/edit/',
+    // search
+    '<%= baseUrl %>/search-discogs', '<%= baseUrl %>/search-books', '<%= baseUrl %>/search-dvds', '<%= baseUrl %>/search-games',
+    // internals API
+    '<%= baseUrl %>/api/',
+    // Import
+    '<%= baseUrl %>/import/',
+    // Admin
+    '<%= baseUrl %>/admin', '<%= baseUrl %>/settings',
+    // Backup
+    '<%= baseUrl %>/export', '<%= baseUrl %>/import'
+  ];
+
+  const isDynamic = dynamicRoutes.some(route => url.pathname.startsWith(route));
+  if (isDynamic) return;
+
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
+  );
+});
