@@ -1,78 +1,93 @@
-![banner recordranger](./docs/img/banner.png)
+<p align="center">
+  <img src="./docs/img/banner.png" alt="RecordRanger banner" width="100%">
+</p>
 
----
+<p align="center">
+  A modern, self-hostable collection manager for vinyl record enthusiasts.
+</p>
 
-**RecordRanger!** is a modern, self-hostable collection manager designed for physical media enthusiasts. From Vinyls and CDs to Books, Movies and Games, catalog, value, and organize your entire physical library through a single, customizable interface.
-
-Built in JavaScript.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Self-Hosted](https://img.shields.io/badge/Self--Hosted-Yes-green.svg)](#)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](#)
-
-
+<p align="center">
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
+  <img src="https://img.shields.io/badge/Self--Hosted-Yes-green.svg" alt="Self-hosted">
+  <img src="https://img.shields.io/badge/Docker-Ready-blue.svg" alt="Docker ready">
+  <a href="https://github.com/xXJimnyCricketXx/RecordRanger/actions/workflows/docker-publish.yml">
+    <img src="https://github.com/xXJimnyCricketXx/RecordRanger/actions/workflows/docker-publish.yml/badge.svg" alt="Build status">
+  </a>
+</p>
 
 ## Overview
 
-RecordRanger allows you to keep track of your physical music, books or even DVD collection. It uses the Discogs API, Hardcover API, IGDB API & TMDB API to retrieve important metadata and, for music, market valuations for your collection. This provides you with a convenient and full customizable dashboard for your home server.
+RecordRanger allows you to keep track of your vinyl record collection. It uses the Discogs API to retrieve metadata, tracklists, and market valuations for your collection, providing a convenient and fully customizable dashboard for your home server.
 
-## ✨ Key Features
+## Contents
 
-### 📚 Universal Collection Management
+- [Features](#features)
+- [Quick Start (Docker Compose)](#quick-start-docker-compose)
+- [Unraid](#unraid)
+- [Configuration](#configuration)
+- [Tech Stack](#tech-stack)
+- [Documentation](#documentation)
+- [License](#license)
 
-   * **Multi-Format Support:** Manage your Music (Vinyls, CDs, Cassettes), Books (Manga, Comics, Hardcover), and Movies (Blu-ray, 4K, VHS, LaserDisc) and video games in one unified library.
-   * **Smart Import:** Add items instantly using Discogs Release IDs or import your entire existing Discogs collection in one click.
-   * **Physical Scanner:*** Scan your physical media to bridge the gap between your shelf and your digital database.
-   * **Advanced Organization:** Easily track the physical location of every item in your home.
+## Features
 
-### 🎨 Fully Customizable Experience
+- **Smart Import** — Add records by searching Discogs, scanning a barcode, or entering them manually; import your entire existing Discogs collection or wishlist in one click.
+- **Duplicate Detection** — Flags matching entries when adding a record you may already own, letting you bump the quantity instead of creating a duplicate.
+- **Advanced Organization** — Track the physical shelf location of every record, and optionally distinguish specific formats like SACD and CDr.
+- **Market Insights** — Real-time value estimates (Low/Median/High) based on Discogs market data, converted into your preferred currency.
+- **Statistics** — Dedicated statistics page (genre distribution, sleeve condition, value trends, top valuable records, and more) plus modular dashboard widgets.
+- **Wishlist** — Keep track of future finds and move them into your collection once received.
+- **Print / PDF Export** — Export your collection or wishlist as a printable list.
+- **Secure Access** — Authentication with IP blocking, plus visibility controls to hide specific records, genres, or types from guests.
+- **Backups** — Manual and scheduled automatic database backups, with restore support.
+- **Color Themes** — Several built-in visual themes, including light and dark mode.
+- **Multilingual** — Fully localized in English 🇬🇧, French 🇫🇷, German 🇩🇪, Spanish 🇪🇸 and Italian 🇮🇹.
 
-   * **Tailored Interface:** Customize your navigation bar with shortcuts that matter to you.
-   * **Personalized Analytics:** Build your dashboard with modular statistics widgets.
-   * **Category Themes:** Apply unique visual themes to differentiate your music, book, and movie libraries.
-   * **Native Design:** Optimized for mobile with seamless Dark & Light modes.
+## Quick Start (Docker Compose)
 
-### 💎 Advanced Tools & Privacy
+```bash
+git clone https://github.com/xXJimnyCricketXx/RecordRanger.git
+cd RecordRanger
+cp .env.example .env
+# edit .env and set at least PASSJWT and SESSION_SECRET (see Configuration below)
+docker compose up -d
+```
 
-   * **Market Insights:** Get real-time value estimates (Low/Median/High) for your **music** collection.
-   * **Wishlist System:** Keep track of your future finds.
-   * **Secure Access:** Integrated authentication system for private viewing or sharing your collection with others.
-   * **Multilingual:** Fully localized in English 🇬🇧, French 🇫🇷, German 🇩🇪, Spanish 🇪🇸 and Italian 🇮🇹.
+The app is then available at `http://localhost:3099`. See the [Docker Deployment Guide](./docs/docker.md) for the pre-built image option and troubleshooting.
+
+## Unraid
+
+A ready-made template is available at [`unraid-template/recordranger.xml`](unraid-template/recordranger.xml). In Unraid, go to **Docker → Add Container**, paste the raw GitHub URL of that file into the **Template** field, and port, paths, and variables will be pre-filled. See the [Docker Deployment Guide](./docs/docker.md#option-3-unraid) for details.
+
+## Configuration
+
+| Variable | Required | Description |
+|---|---|---|
+| `MONGODB_URL` | yes | Connection string for your MongoDB instance |
+| `PASSJWT` | yes | Complex password used for JWT token encryption |
+| `SESSION_SECRET` | yes | Complex secret used for session encryption |
+| `PROD` | no | Set to `true` **only** if serving over HTTPS via a reverse proxy; otherwise leave `false` |
+| `VINYL_PORT` | no | Port the app listens on inside the container (default: `3099`) |
+| `BASE_URL` | no | Base path for serving on a sub-path, leave empty to serve from root |
+| `DISCOGS_TOKEN` | no | Discogs API token — the app works without it, but with lower rate limits and no condition-based price suggestions. See [API Configuration](./docs/api-keys.md) |
+
+## Tech Stack
+
+| Component | Technology |
+|---|---|
+| Backend | Node.js / Express |
+| Database | MongoDB |
+| Frontend | EJS Templates |
+| Styling | Tailwind CSS |
+| Localization | i18next |
+| API | Discogs |
 
 ## Documentation
 
-To keep things organized, the documentation is split into specialized guides:
+- 🏁 [**Getting Started**](./docs/getting-started.md) - Manual installation and requirements.
+- 🐳 [**Docker Deployment**](./docs/docker.md) - Docker Compose, pre-built image, and Unraid.
+- 🔑 [**API Configuration**](./docs/api-keys.md) - How to obtain your Discogs API key.
 
-* 🏁 [**Getting Started**](./docs/getting-started.md) - Manual installation and requirements.
-* 🐳 [**Docker Deployment**](./docs/docker.md) - Deploying via Docker Compose *(Recommended)*.
-* 🔑 [**API Configuration**](./docs/api-keys.md) - How to obtain your Discogs, Hardcover and TMDB API keys.
+## License
 
----
-
-## Quick Start (Docker)
-
-The fastest way to run RecordRanger is using Docker. You only need a `docker-compose.yml` and a `.env` file.
-
-1. **Create a `docker-compose.yml`** (see [Docker Deployment Guide](./docs/docker.md) for the full file).
-2. **Setup your environment variables** in a `.env` file (go check how to get your [api keys](./docs/api-keys.md)).
-3. **Run the application**:
-   ```bash
-   docker compose up -d
-   ```
-
-Access the application at `http://localhost:3099`.
-
-# Tech stack
-
-| **Component**    | **Technology**                    |
-| :--------------- | :-------------------------------- |
-| **Backend**      | Node.js / Express                 |
-| **Database**     | MongoDB                           |
-| **Frontend**     | EJS Templates                     |
-| **Styling**      | Tailwind CSS                      |
-| **Localization** | i18next                           |
-| **API**          | Discogs / Hardcover / TMDB / IGDB |
-
-# 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more information.

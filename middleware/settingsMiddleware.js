@@ -9,12 +9,9 @@ module.exports = async (req, res, next) => {
         let settings = await Settings.findOne().lean();
         if (!settings) {
             settings = {
-                siteName: 'RecordRanger',
+                siteName: 'RecordRanger!',
                 statsWidgets: ['total', 'vinyl', 'artist'],
-                theme: {
-                    home: { preset: 'default' },
-                    music: { preset: 'default' }
-                }
+                theme: { preset: 'ranger' }
             };
         } else if (!settings.statsWidgets) {
             settings.statsWidgets = ['total', 'vinyl', 'artist'];
@@ -47,7 +44,7 @@ module.exports = async (req, res, next) => {
         console.error("[ERR] SettingsMiddleware:", err);
         res.locals.isDark = true;
         res.locals.currentLng = 'fr';
-        res.locals.settings = { theme: { home: { preset: 'default' } } };
+        res.locals.settings = { theme: { preset: 'ranger' } };
         next();
     }
 };

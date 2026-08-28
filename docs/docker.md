@@ -102,6 +102,20 @@ Best for: Developers or those who want to customize the code.
 docker compose up --build -d
 ```
 
+## Option 3: Unraid
+
+Best for: Unraid users. RecordRanger isn't (yet) listed in Community Applications, but you can add it manually:
+
+1. Install a MongoDB container first (any MongoDB template works), and note its container IP or hostname.
+2. Go to **Docker → Add Container**.
+3. In the **Template** field at the top, paste this URL and hit Tab/Enter to load it:
+   ```
+   https://raw.githubusercontent.com/xXJimnyCricketXx/RecordRanger/main/unraid-template/recordranger.xml
+   ```
+4. All fields (port, paths, variables) will auto-fill. Adjust the `MongoDB URL`, `JWT Password`, `Session Secret` and `Discogs API Token` fields, then click **Apply**.
+
+> Applying the template once saves a local copy to `/boot/config/plugins/dockerMan/templates-user/`, so RecordRanger will also show up under **Add Container → Select a template** for future re-installs.
+
 ## 🔄 Updating
 
 ### Updating (Pre-built Image)

@@ -3,33 +3,18 @@
   const isDark = (typeof locals.isDark !== 'undefined') ? locals.isDark : true;
   const currentLng = (typeof locals.currentLng !== 'undefined') ? locals.currentLng : 'fr';
   const THEMES = (typeof locals.allThemes !== 'undefined') ? locals.allThemes : {};
-  
-  const rawCategory = (typeof locals.currentType !== 'undefined') ? locals.currentType : (locals.detectedType || 'home');
 
-  let themeKey = 'home';
-
-  const musicTypes = ['music', 'vinyl', 'add-vinyl', 'album'];
-
-  if (musicTypes.includes(rawCategory)) {
-      themeKey = 'music';
+  let activePresetKey = 'ranger';
+  if (typeof settings !== 'undefined' && settings && settings.theme && settings.theme.preset) {
+      activePresetKey = settings.theme.preset;
   }
 
-  let activePresetKey = 'default';
-  if (typeof settings !== 'undefined' && settings && settings.theme) {
-        if (settings.theme[themeKey] && settings.theme[themeKey].preset) {
-          activePresetKey = settings.theme[themeKey].preset;
-      } 
-      else if (settings.theme.home && settings.theme.home.preset) {
-          activePresetKey = settings.theme.home.preset;
-      }
-  }
-
-  const safeFallback = { 
+  const safeFallback = {
       light: { bg: '#e2e8f0', card: '#ffffff', navbar: '#1e293b', navText: '#ffffff', text: '#0f172a', subtext: '#475569', highlight: '#10b981' },
       dark:  { bg: '#171717', card: '#262626', navbar: '#0a0a0a', navText: '#ffffff', text: '#ffffff', subtext: '#a3a3a3', highlight: '#10b981' }
   };
 
-  const activeTheme = (THEMES[activePresetKey]) ? THEMES[activePresetKey] : (THEMES['default'] || safeFallback);
+  const activeTheme = (THEMES[activePresetKey]) ? THEMES[activePresetKey] : (THEMES['ranger'] || safeFallback);
 %>
 
 <html lang="<%= currentLng %>" class="<%= isDark ? 'dark' : '' %> <%= activePresetKey === 'ranger' ? 'theme-ranger' : '' %>">
@@ -118,6 +103,7 @@
     .text-primary-theme { color: var(--accent-text) !important; }
     .username-highlight { color: var(--highlight) !important; }
     .bg-primary-theme { background-color: var(--highlight) !important; color: var(--highlight-text) !important; }
+    .border-primary-theme { border-color: var(--highlight) !important; }
     .hover\:text-primary-theme:hover { color: var(--accent-text) !important; }
     .hover\:bg-primary-theme:hover { background-color: var(--highlight) !important; color: var(--highlight-text) !important; }
 
@@ -130,6 +116,18 @@
     #page-loader {
       background-color: var(--bg-page);
       color: var(--text-main);
+    }
+
+    /* Custom dropdown arrow: native <select> arrows are drawn by the browser
+       in a fixed-width control area that CSS padding cannot move, so we hide
+       it (appearance:none) and place a real fa-chevron-down icon on top —
+       same icon/classes as the custom dropdowns in the collection filters,
+       for a visually identical result. */
+    select.select-theme {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding-right: 2.75rem !important;
     }
   </style>
 
@@ -150,7 +148,7 @@
   </div>
 
   <nav class="nav-custom transition-colors duration-300">
-      <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+      <div class="w-full flex flex-wrap items-center justify-between px-6 py-4">
       
       <a href="<%= baseUrl || '/' %>" class="flex items-center group">
         <img src="<%= baseUrl %>/ressources/<%= isDark ? 'recordranger-logo-dark.png' : 'recordranger-logo-light.png' %>" alt="RecordRanger!" class="w-48 h-auto">
@@ -159,8 +157,13 @@
       <div class="flex items-center md:order-2 gap-4">
         
         <% if (locals.user) { %>
-        <button type="button" class="flex text-sm bg-black/5 dark:bg-white/10 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button" data-dropdown-toggle="user-dropdown">
-          <img class="w-8 h-8 rounded-full object-cover" src="<%= baseUrl + user.img %>" alt="user photo">
+        <button type="button" class="flex items-center gap-2.5 text-sm outline-none" id="user-menu-button" data-dropdown-toggle="user-dropdown">
+          <img class="w-9 h-9 rounded-full object-cover" src="<%= baseUrl + user.img %>" alt="user photo">
+          <span class="hidden sm:flex flex-col items-start leading-tight">
+            <span class="font-semibold text-[var(--nav-text)] max-w-[140px] truncate"><%= user.username %></span>
+            <span class="text-[11px] opacity-50 text-[var(--nav-text)] max-w-[140px] truncate"><%= user.email %></span>
+          </span>
+          <i class="hidden sm:inline fa-solid fa-chevron-down text-[10px] opacity-50 text-[var(--nav-text)]"></i>
         </button>
   
         <div class="z-50 hidden my-4 text-base list-none card-theme rounded-lg shadow-xl min-w-[200px]" id="user-dropdown">          
@@ -182,18 +185,13 @@
               </li>
               <li>
                 <a href="<%= baseUrl %>/admin/personnalisation" class="block px-4 py-2 text-sm text-[var(--text-main)] hover:bg-black/5 dark:hover:bg-white/10 mx-2 rounded transition flex items-center gap-3">
-                  <i class="fa-solid fa-wand-magic-sparkles w-5 text-center opacity-70"></i> <span>Personnalisation</span>
+                  <i class="fa-solid fa-wand-magic-sparkles w-5 text-center opacity-70"></i> <span><%= t('perso.title') %></span>
                 </a>
               </li>
               <% } %>
               <li>
                 <a href="<%= baseUrl %>/settings" class="block px-4 py-2 text-sm text-[var(--text-main)] hover:bg-black/5 dark:hover:bg-white/10 mx-2 rounded transition flex items-center gap-3">
                   <i class="fa-solid fa-user-gear w-5 text-center opacity-70"></i> <span><%= t('nav.settings') %></span>
-                </a>
-              </li>
-              <li>
-                <a href="<%= baseUrl %>/stats" target="_blank" class="block px-4 py-2 text-sm text-[var(--text-main)] hover:bg-black/5 dark:hover:bg-white/10 mx-2 rounded transition flex items-center gap-3">
-                  <i class="fa-solid fa-chart-pie w-5 text-center opacity-70"></i> <span><%= t('nav.stats') %></span>
                 </a>
               </li>
               <li>
@@ -204,7 +202,7 @@
               </li>
 
               <li class="pt-2 border-t border-black/5 dark:border-white/10 mt-2">
-                <a href="<%= baseUrl %>/logout" class="block px-4 py-2 text-sm font-bold text-center text-white bg-red-500 hover:bg-red-600 rounded-md mx-4 mb-2 transition-colors shadow-sm">
+                <a href="<%= baseUrl %>/logout" class="block px-4 py-2 text-sm font-bold text-center bg-primary-theme hover:brightness-110 rounded-md mx-4 mb-2 transition-all shadow-sm">
                   <%= t('nav.logout') %>
                 </a>
               </li>
@@ -227,11 +225,12 @@
                 { label: t('nav.home'), url: '/' },
                 { label: t('nav.collection'), url: '/collection' },
                 { label: t('nav.wishlist'), url: '/wishlist' },
+                { label: t('nav.stats'), url: '/stats', newTab: true },
             ];
 
             navLinks.forEach(item => { %>
                 <li>
-                  <a href="<%= baseUrl + item.url %>" class="block py-2 px-3 md:p-0 text-[var(--nav-text)] hover:text-primary-theme transition-colors">
+                  <a href="<%= baseUrl + item.url %>" <%= item.newTab ? 'target="_blank"' : '' %> class="block py-2 px-3 md:p-0 text-[var(--nav-text)] hover:text-primary-theme transition-colors">
                     <%= item.label %>
                   </a>
                 </li>

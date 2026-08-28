@@ -1,3 +1,23 @@
+<%
+  const THEMES = (typeof locals.allThemes !== 'undefined') ? locals.allThemes : {};
+  let activePresetKey = 'ranger';
+  if (typeof settings !== 'undefined' && settings && settings.theme && settings.theme.preset) {
+      activePresetKey = settings.theme.preset;
+  }
+  const safeFallback = {
+      light: { bg: '#e4e2dd', card: '#ffffff', text: '#232323', highlight: '#ff89a9', highlightText: '#232323' },
+      dark:  { bg: '#171012', card: '#282929', text: '#f1efe9', highlight: '#ff89a9', highlightText: '#232323' }
+  };
+  const activeTheme = THEMES[activePresetKey] || THEMES['ranger'] || safeFallback;
+  const modeTheme = isDark ? (activeTheme.dark || safeFallback.dark) : (activeTheme.light || safeFallback.light);
+  const bgColor = modeTheme.bg;
+  const cardColor = modeTheme.card;
+  const textColor = modeTheme.text;
+  const highlightColor = modeTheme.highlight || safeFallback.light.highlight;
+  const highlightTextColor = modeTheme.highlightText || '#fff';
+  const borderColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.05)';
+  const imgPlaceholder = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.05)';
+%>
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -8,13 +28,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
-        body { background: #e4e2dd; color: #232323; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        body { background: <%= bgColor %>; color: <%= textColor %>; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        .card { background: <%= cardColor %>; box-shadow: 0 1px 4px rgba(0,0,0,<%= isDark ? '.3' : '.06' %>); }
+        .value-row { border-bottom: 1px solid <%= borderColor %>; }
+        .value-row img { background: <%= imgPlaceholder %>; }
 
         .card {
-            background: #fff;
             border-radius: 1.25rem;
             padding: 1.75rem;
-            box-shadow: 0 1px 4px rgba(0,0,0,.06);
         }
 
         .section-title {
@@ -36,7 +57,6 @@
             align-items: center;
             gap: .75rem;
             padding: .55rem 0;
-            border-bottom: 1px solid rgba(0,0,0,.05);
         }
         .value-row:last-child { border-bottom: none; }
         .value-row img {
@@ -44,16 +64,49 @@
             border-radius: .5rem;
             object-fit: cover;
             flex-shrink: 0;
-            background: #f0f0f0;
+        }
+
+        .no-print {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+        }
+        .btn-print {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: <%= highlightColor %>;
+            color: <%= highlightTextColor %>;
+        }
+
+        @media print {
+            @page { size: A4; margin: 15mm; }
+            .no-print { display: none !important; }
+            body { background: #fff !important; color: #232323 !important; }
+            .card { background: #fff !important; box-shadow: none !important; border: 1px solid #e5e5e5; break-inside: avoid; }
+            .value-row { border-bottom: 1px solid rgba(0,0,0,.08) !important; }
+            .value-row img { background: #f0f0f0 !important; }
         }
     </style>
 </head>
 <body>
 <div style="max-width:1140px; margin:0 auto; padding:2.5rem 1.5rem;">
 
+    <div class="no-print">
+        <button onclick="window.print()" class="btn-print">
+            🖨️ Drucken / Als PDF speichern
+        </button>
+    </div>
+
     <!-- Header / Kennzahlen -->
     <div class="text-center" style="margin-bottom:2.5rem;">
-        <img src="/ressources/recordranger-logo-light.png" alt="RecordRanger!" style="height:3rem; width:auto; margin:0 auto 2rem;">
+        <img src="<%= baseUrl %>/ressources/<%= isDark ? 'recordranger-logo-dark.png' : 'recordranger-logo-light.png' %>" alt="RecordRanger!" style="height:3rem; width:auto; margin:0 auto 2rem;">
 
         <div style="display:flex; justify-content:center; gap:4rem; flex-wrap:wrap;">
             <div class="text-center">
@@ -61,11 +114,7 @@
                 <div class="stat-label"><%= t('stats.vinyls_label') || 'Vinyls' %></div>
             </div>
             <div class="text-center">
-                <div class="stat-number" style="opacity:.3">N/A</div>
-                <div class="stat-label"><%= t('stats.purchase_price') || 'Purchase Price' %></div>
-            </div>
-            <div class="text-center">
-                <div class="stat-number" style="color:#ff89a9">
+                <div class="stat-number" style="color:<%= highlightColor %>">
                     <%= totalValue > 0
                         ? new Intl.NumberFormat('de-DE', { style: 'currency', currency, maximumFractionDigits: 0 }).format(totalValue)
                         : 'N/A' %>
@@ -96,7 +145,7 @@
                             <p style="font-weight:700; font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><%= album.title %></p>
                             <p style="font-size:.75rem; opacity:.5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><%= album.artist %></p>
                         </div>
-                        <span style="font-size:.85rem; font-weight:900; flex-shrink:0; color:#ff89a9;">
+                        <span style="font-size:.85rem; font-weight:900; flex-shrink:0; color:<%= highlightColor %>;">
                             <%= new Intl.NumberFormat('de-DE', { style: 'currency', currency, maximumFractionDigits: 2 }).format(album.estimated_price.value * (album.quantity || 1)) %>
                         </span>
                     </div>
@@ -143,11 +192,15 @@
     Chart.defaults.font.family = "'Helvetica Neue', Helvetica, Arial, sans-serif";
     Chart.defaults.font.size = 11;
 
-    const pink = '#ff89a9';
-    const gridColor = 'rgba(0,0,0,.06)';
+    const isDark = <%- isDark ? 'true' : 'false' %>;
+    const pink = <%- JSON.stringify(highlightColor) %>;
+    const gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
+    const tickColor = isDark ? '#999' : '#888';
+    const legendColor = <%- JSON.stringify(textColor) %>;
+    const pieBorderColor = <%- JSON.stringify(cardColor) %>;
     const commonScales = {
-        y: { beginAtZero: true, ticks: { precision: 0, color: '#888' }, grid: { color: gridColor }, border: { display: false } },
-        x: { grid: { display: false }, ticks: { color: '#888' } }
+        y: { beginAtZero: true, ticks: { precision: 0, color: tickColor }, grid: { color: gridColor }, border: { display: false } },
+        x: { grid: { display: false }, ticks: { color: tickColor } }
     };
 
     const genreLabels = <%- JSON.stringify(genres.map(g => g[0])) %>;
@@ -195,7 +248,7 @@
     });
 
     // Condition pie chart
-    const condColors = ['#ff89a9','#ffd3df','#232323','#5c5d5d','#c9b9bd','#a0a0a0','#d0d0d0'];
+    const condColors = [pink,'#ffd3df','#232323','#5c5d5d','#c9b9bd','#a0a0a0','#d0d0d0'];
     new Chart(document.getElementById('conditionChart'), {
         type: 'pie',
         data: {
@@ -204,7 +257,7 @@
                 data: condValues,
                 backgroundColor: condColors.slice(0, condLabels.length),
                 borderWidth: 2,
-                borderColor: '#fff'
+                borderColor: pieBorderColor
             }]
         },
         options: {
@@ -212,7 +265,7 @@
             plugins: {
                 legend: {
                     position: 'right',
-                    labels: { font: { size: 12 }, padding: 16, color: '#232323' }
+                    labels: { font: { size: 12 }, padding: 16, color: legendColor }
                 }
             }
         }

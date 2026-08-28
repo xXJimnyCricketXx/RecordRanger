@@ -1,49 +1,33 @@
 const express = require('express');
 const router = express.Router();
-const Item = require('../models/Item');
 const User = require('../models/User');
-const LoginLog = require('../models/LoginLog');
 const Settings = require('../models/Settings');
 const { requireAuth, requireAdmin } = require('../middleware/authMiddleware');
+const {
+    buildBackupData,
+    restoreFromData,
+    createBackup,
+    listBackups,
+    readBackup,
+    deleteBackup,
+    pruneOldBackups
+} = require('../utils/backupScheduler');
 
 /**
  * routes/backupRoutes.js
  *
  * Backup and restore endpoints for the application data.
  *
- * - GET /export:    Authenticated admin-only endpoint that streams a JSON
- *                   backup containing users, albums and login logs.
- * - POST /import:   Endpoint that accepts a JSON backup payload and restores
- *                   the database collections. Intended for admin use.
- *
- * These routes use the standard `requireAuth` and `requireAdmin` middleware
- * where appropriate. Responses are JSON for the import endpoint and a file
- * attachment for the export endpoint.
+ * - GET /export:               Streams a full JSON backup for manual download.
+ * - POST /import:               Restores the database from an uploaded JSON backup.
+ * - POST /schedule:             Saves the automated backup schedule settings.
+ * - POST /backups/:file/restore: Restores from a scheduled backup stored on disk.
+ * - DELETE /backups/:file:      Deletes a scheduled backup stored on disk.
  */
 
-/**
- * GET /export
- *
- * Export the current database state as a JSON file. This endpoint is
- * protected: only authenticated administrators may request a backup.
- *
- * Response:
- * - Attachment: JSON file containing `users`, `albums`, `logs` and `metadata`.
- * - 500 on server error.
- */
 router.get('/export', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const data = {
-            users: await User.find({}).lean(),
-            albums: await Item.find({}).lean(), 
-            logs: await LoginLog.find({}).lean(),
-            settings: await Settings.findOne().lean(),
-            metadata: {
-                version: "2.0.0",
-                date: new Date()
-            }
-        };
-
+        const data = await buildBackupData();
         const fileName = `recordranger_backup_${new Date().toISOString().split('T')[0]}.json`;
         res.setHeader('Content-disposition', 'attachment; filename=' + fileName);
         res.setHeader('Content-type', 'application/json');
@@ -54,27 +38,19 @@ router.get('/export', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-/**
- * POST /import
- */
 router.post('/import', async (req, res) => {
-    try {        
+    try {
         const userCount = await User.countDocuments();
-        
+
         if (userCount > 0) {
             const currentUser = res.locals.user;
-
             if (!currentUser || !currentUser.isAdmin) {
                 console.warn(`[SECURITY] import unauthorized : ${req.ip}`);
-                return res.status(403).json({ 
-                    error: "Import unauthorized." 
-                });
+                return res.status(403).json({ error: "Import unauthorized." });
             }
         }
-        
-        // Setup
-        let data = req.body;
 
+        let data = req.body;
         if (data.backupData) {
             try {
                 data = typeof data.backupData === 'string' ? JSON.parse(data.backupData) : data.backupData;
@@ -83,44 +59,64 @@ router.post('/import', async (req, res) => {
             }
         }
 
-        if (!data || (!data.users && !data.albums)) {
-            return res.status(400).json({ error: "Backup file missing required fields" });
-        }
-
-        await Promise.all([
-            LoginLog.deleteMany({}),
-            Item.deleteMany({}),
-            User.deleteMany({}),
-            Settings.deleteMany({})
-        ]);
-
-        if (data.users && data.users.length > 0) {
-            await User.insertMany(data.users);
-        }
-
-        if (data.albums && data.albums.length > 0) {
-            const cleanAlbums = data.albums.map(album => {
-                if (!album.kind) return { ...album, kind: 'Music' };
-                return album;
-            });
-            await Item.insertMany(cleanAlbums);
-        }
-
-        if (data.logs && data.logs.length > 0) {
-            await LoginLog.insertMany(data.logs);
-        }
-        
-        if (data.settings) {
-            await Settings.create(data.settings);
-        } else {
-            await Settings.create({});
-        }
+        await restoreFromData(data);
         res.cookie('jwt', '', { maxAge: 1 });
         res.status(200).json({ success: true, message: "Import successful" });
-
     } catch (err) {
         console.error("[ERR] Import :", err);
+        res.status(err.message === 'Backup file missing required fields' ? 400 : 500).json({ error: err.message });
+    }
+});
+
+// Save the automated backup schedule (time, interval, retention).
+router.post('/schedule', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { enabled, time, intervalDays, retention } = req.body;
+        await Settings.findOneAndUpdate({}, {
+            $set: {
+                'backupSchedule.enabled': enabled === 'on' || enabled === true,
+                'backupSchedule.time': /^\d{2}:\d{2}$/.test(time) ? time : '03:00',
+                'backupSchedule.intervalDays': Math.max(1, parseInt(intervalDays) || 1),
+                'backupSchedule.retention': Math.max(1, Math.min(30, parseInt(retention) || 3))
+            }
+        }, { upsert: true });
+        res.redirect('/admin?msg=backup_schedule_saved');
+    } catch (err) {
+        console.error('[ERR] backup schedule save', err);
+        res.redirect('/admin?msg=error');
+    }
+});
+
+// Trigger an on-demand scheduled-style backup (written to disk, subject to retention).
+router.post('/backups/create', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const settings = await Settings.findOne().lean();
+        await createBackup();
+        await pruneOldBackups((settings && settings.backupSchedule && settings.backupSchedule.retention) || 3);
+        res.json({ success: true, backups: listBackups() });
+    } catch (err) {
+        console.error('[ERR] manual scheduled backup', err);
         res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/backups/:filename/restore', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const data = readBackup(req.params.filename);
+        await restoreFromData(data);
+        res.cookie('jwt', '', { maxAge: 1 });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+router.delete('/backups/:filename', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        deleteBackup(req.params.filename);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
 });
 

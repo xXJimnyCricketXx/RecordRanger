@@ -4,11 +4,14 @@
 
         <div class="pt-6 mb-6 flex items-center justify-between">
             <h1 class="text-3xl font-bold transition-colors flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
-                <span>
-                    <%= t('collection.title') %>
+                <span class="flex items-center gap-3">
+                    <span class="w-2 h-7 md:h-8 bg-primary-theme rounded-full inline-block flex-shrink-0"></span>
+                    <span>
+                        <%= t('collection.title') %>
+                    </span>
                 </span>
                 <span
-                    class="px-3 md:mt-1.5 py-1 bg-black/5 dark:bg-white/10 rounded-full text-sm font-medium opacity-70 w-fit">
+                    class="px-3 md:mt-1.5 py-1 bg-primary-theme rounded-full text-sm font-bold w-fit">
                     <%= totalItems %>
                         <%= t('common.items') %>
                 </span>
@@ -70,8 +73,8 @@
             </div>
 
             <div id="filterContainer"
-                class="hidden sm:grid lg:flex grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:flex-row gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div class="relative sm:col-span-2 md:col-span-3 lg:flex-grow">
+                class="hidden sm:grid lg:flex lg:flex-wrap lg:items-center grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:flex-row gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div class="relative sm:col-span-2 md:col-span-3 lg:w-52 lg:flex-shrink">
                     <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                         <i class="fa-solid fa-search opacity-40"></i>
                     </div>
@@ -155,9 +158,9 @@
                                     <label
                                         class="flex items-center gap-3 p-2 text-sm rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group">
                                         <input type="checkbox"
-                                            class="genre-checkbox accent-primary-theme w-4 h-4 rounded border-gray-300 transition-all cursor-pointer"
+                                            class="genre-checkbox accent-primary-theme w-4 h-4 rounded border-gray-300 transition-all cursor-pointer flex-shrink-0"
                                             value="<%= gen %>" <%=currentGenreArr.includes(gen) ? 'checked' : '' %>>
-                                        <span class="group-hover:translate-x-0.5 transition-transform">
+                                        <span class="min-w-0 break-words group-hover:translate-x-0.5 transition-transform">
                                             <%= gen %>
                                         </span>
                                     </label>
@@ -196,9 +199,9 @@
                                         styles.forEach(sty => { %>
                                         <label class="flex items-center gap-3 p-2 text-sm rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group">
                                             <input type="checkbox"
-                                                class="style-checkbox accent-primary-theme w-4 h-4 rounded border-gray-300 transition-all cursor-pointer"
+                                                class="style-checkbox accent-primary-theme w-4 h-4 rounded border-gray-300 transition-all cursor-pointer flex-shrink-0"
                                                 value="<%= sty %>" <%= currentStyleArr.includes(sty) ? 'checked' : '' %>>
-                                            <span class="group-hover:translate-x-0.5 transition-transform">
+                                            <span class="min-w-0 break-words group-hover:translate-x-0.5 transition-transform">
                                                 <%= sty %>
                                             </span>
                                         </label>
@@ -216,91 +219,76 @@
                             </div>
                         </div>
 
-                <div class="w-full lg:w-44 relative">
-                    <div class="relative">
-                        <input type="text" id="artistInput" placeholder="<%= t('collection.artist_filter') %>"
-                            value="<%= locals.queryArtist || '' %>" autocomplete="off"
-                            class="filter-input-textbox block w-full p-2.5 <%= locals.queryArtist ? 'pr-8' : '' %> text-sm card-theme rounded-lg border focus:ring-1 focus:ring-primary-theme outline-none placeholder-opacity-50">
-                        <% if (locals.queryArtist) { %>
-                            <button onclick="clearFilterParam('artist')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-red-500 transition-colors">
-                                <i class="fa-solid fa-circle-xmark"></i>
-                            </button>
-                        <% } %>
-                        <div id="artistAutocomplete"
-                            class="hidden absolute left-0 right-0 top-full z-50 mt-1 card-theme rounded-xl shadow-2xl border border-black/5 dark:border-white/10 max-h-[40vh] overflow-y-auto custom-scrollbar">
-                        </div>
-                    </div>
-                </div>
+                <button onclick="toggleNoEstimate()"
+                    title="Nur Alben ohne Schätzung anzeigen"
+                    class="w-full lg:w-auto h-10 px-3 flex items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap <%= locals.queryNoEstimate ? 'bg-primary-theme text-[#232323] border-primary-theme' : 'card-theme hover:border-primary-theme hover:text-primary-theme' %>">
+                    <i class="fa-solid fa-circle-question text-xs"></i>
+                    Nicht geschätzt
+                </button>
 
-                <div class="w-full lg:w-48 relative">
-                    <button onclick="toggleSortMenu(event)" id="sortSelectorBtn"
-                        class="block w-full p-2.5 text-sm card-theme rounded-lg border focus:ring-1 focus:ring-primary-theme outline-none transition-all flex justify-between items-center group">
-                        <span class="truncate opacity-50 group-hover:opacity-100 transition-opacity"
-                            id="sortLabel">
-                            <%= t('collection.sort_label') %>
-                        </span>
-                        <i
-                            class="fa-solid fa-arrow-down-short-wide text-[12px] opacity-20 group-hover:opacity-60 transition-all"></i>
-                    </button>
-                    <div id="sort-menu"
-                        class="hidden absolute left-0 right-0 top-full z-50 mt-2 card-theme rounded-xl p-2 shadow-2xl border border-black/5 dark:border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <% const sortOptions=[ { key: 'added' , label: t('collection.sort_added'), descFirst:
-                            true }, { key: 'title' , label: t('collection.sort_title'), descFirst: false }, {
-                            key: 'year' , label: t('collection.sort_year'), descFirst: true }, ]; %>
-                            <% sortOptions.forEach(opt=> {
-                                const isActive = currentSort.startsWith(opt.key);
-                                const currentDir = isActive ? (currentSort.endsWith('_asc') ? 'asc' :
-                                'desc') : (opt.descFirst ? 'desc' : 'asc');
-                                %>
-                                <button
-                                    onclick="handleSort('<%= opt.key %>', '<%= currentDir %>', <%= opt.descFirst %>)"
-                                    class="w-full flex items-center justify-between gap-2 p-2.5 text-sm rounded-lg transition-all cursor-pointer
-                                            <%= isActive ? 'bg-primary-theme/10 text-primary-theme font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100' %>">
-                                    <span>
-                                        <%= opt.label %>
-                                    </span>
-                                    <% if (isActive) { %>
-                                        <i
-                                            class="fa-solid fa-arrow-<%= currentDir === 'asc' ? 'up' : 'down' %> text-[11px]"></i>
-                                        <% } %>
-                                </button>
-                                <% }); %>
-                                        <% const artistActive=currentSort.startsWith('artist'); const
-                                            artistDir=artistActive ? (currentSort.endsWith('_asc') ? 'asc'
-                                            : 'desc' ) : 'asc' ; %>
-                                            <button onclick="handleSort('artist', '<%= artistDir %>', false)"
-                                                class="w-full flex items-center justify-between gap-2 p-2.5 text-sm rounded-lg transition-all cursor-pointer
-                                            <%= artistActive ? 'bg-primary-theme/10 text-primary-theme font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100' %>">
-                                                <span>
-                                                    <%= t('collection.sort_artist') %>
-                                                </span>
-                                                <% if (artistActive) { %>
-                                                    <i
-                                                        class="fa-solid fa-arrow-<%= artistDir === 'asc' ? 'up' : 'down' %> text-[11px]"></i>
-                                                    <% } %>
-                                            </button>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-2 w-full lg:w-auto">
+                <!-- Forced onto its own row (w-full) so it always sits below the filter fields above, right-aligned -->
+                <div class="w-full sm:col-span-2 md:col-span-3 flex items-center justify-end gap-2 mt-2 pt-3 border-t border-black/5 dark:border-white/10">
                     <div class="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg h-10 items-center">
-                        <button onclick="setFilterMode('show')" 
+                        <button onclick="setFilterMode('show')"
                             title="<%= t('collection.filter_mode_show') %>"
                             class="w-10 h-8 flex items-center justify-center rounded-md transition-all <%= (locals.queryFilterMode !== 'hide') ? 'bg-white dark:bg-white/20 shadow-sm text-primary-theme' : 'opacity-40 hover:opacity-100' %>">
                             <i class="fa-solid fa-eye text-xs"></i>
                         </button>
-                        <button onclick="setFilterMode('hide')" 
+                        <button onclick="setFilterMode('hide')"
                             title="<%= t('collection.filter_mode_hide') %>"
-                            class="w-10 h-8 flex items-center justify-center rounded-md transition-all <%= (locals.queryFilterMode === 'hide') ? 'bg-red-500 text-white shadow-sm' : 'opacity-40 hover:opacity-100' %>">
+                            class="w-10 h-8 flex items-center justify-center rounded-md transition-all <%= (locals.queryFilterMode === 'hide') ? 'bg-primary-theme shadow-sm' : 'opacity-40 hover:opacity-100' %>">
                             <i class="fa-solid fa-eye-slash text-xs"></i>
                         </button>
                     </div>
-                    
-                    <div class="w-12">
-                        <button onclick="reloadPage()"
-                            class="block w-full h-10 flex items-center justify-center rounded-lg border hover:text-primary-theme hover:border-primary-theme card-theme transition-all bg-primary-theme/5">
-                            <i class="fa-solid fa-magnifying-glass opacity-60"></i>
+
+                    <div class="w-40 relative flex-shrink-0">
+                        <button onclick="toggleSortMenu(event)" id="sortSelectorBtn"
+                            class="block w-full p-2.5 text-sm card-theme rounded-lg border focus:ring-1 focus:ring-primary-theme outline-none transition-all flex justify-between items-center group">
+                            <span class="truncate opacity-50 group-hover:opacity-100 transition-opacity"
+                                id="sortLabel">
+                                <%= t('collection.sort_label') %>
+                            </span>
+                            <i
+                                class="fa-solid fa-arrow-down-short-wide text-[12px] opacity-20 group-hover:opacity-60 transition-all"></i>
                         </button>
+                        <div id="sort-menu"
+                            class="hidden absolute right-0 left-auto top-full z-50 mt-2 w-48 card-theme rounded-xl p-2 shadow-2xl border border-black/5 dark:border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <% const sortOptions=[ { key: 'added' , label: t('collection.sort_added'), descFirst:
+                                true }, { key: 'title' , label: t('collection.sort_title'), descFirst: false }, {
+                                key: 'year' , label: t('collection.sort_year'), descFirst: true }, ]; %>
+                                <% sortOptions.forEach(opt=> {
+                                    const isActive = currentSort.startsWith(opt.key);
+                                    const currentDir = isActive ? (currentSort.endsWith('_asc') ? 'asc' :
+                                    'desc') : (opt.descFirst ? 'desc' : 'asc');
+                                    %>
+                                    <button
+                                        onclick="handleSort('<%= opt.key %>', '<%= currentDir %>', <%= opt.descFirst %>)"
+                                        class="w-full flex items-center justify-between gap-2 p-2.5 text-sm rounded-lg transition-all cursor-pointer
+                                                <%= isActive ? 'bg-primary-theme/10 text-primary-theme font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100' %>">
+                                        <span>
+                                            <%= opt.label %>
+                                        </span>
+                                        <% if (isActive) { %>
+                                            <i
+                                                class="fa-solid fa-arrow-<%= currentDir === 'asc' ? 'up' : 'down' %> text-[11px]"></i>
+                                            <% } %>
+                                    </button>
+                                    <% }); %>
+                                            <% const artistActive=currentSort.startsWith('artist'); const
+                                                artistDir=artistActive ? (currentSort.endsWith('_asc') ? 'asc'
+                                                : 'desc' ) : 'asc' ; %>
+                                                <button onclick="handleSort('artist', '<%= artistDir %>', false)"
+                                                    class="w-full flex items-center justify-between gap-2 p-2.5 text-sm rounded-lg transition-all cursor-pointer
+                                                <%= artistActive ? 'bg-primary-theme/10 text-primary-theme font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100' %>">
+                                                    <span>
+                                                        <%= t('collection.sort_artist') %>
+                                                    </span>
+                                                    <% if (artistActive) { %>
+                                                        <i
+                                                            class="fa-solid fa-arrow-<%= artistDir === 'asc' ? 'up' : 'down' %> text-[11px]"></i>
+                                                        <% } %>
+                                                </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -310,8 +298,6 @@
                 const activePills = [];
                 if (locals.querySearch) activePills.push({ key: 'search', label: t('collection.filter_placeholder') + ': "' + locals.querySearch + '"' });
                 if (locals.queryLocation) activePills.push({ key: 'location', label: t('common.location') + ': "' + locals.queryLocation + '"' });
-                if (locals.queryArtist) activePills.push({ key: 'artist', label: t('collection.artist_filter') + ': "' + locals.queryArtist + '"' });
-                
                 if (locals.queryDecade) {
                     activePills.push({ key: 'decade', label: t('collection.decade_filter') + ': ' + locals.queryDecade.split(',').map(d => d + 's').join(', ') });
                 }
@@ -320,6 +306,9 @@
                 }
                 if (locals.queryStyle) {
                     activePills.push({ key: 'style', label: t('collection.styles_filter') + ': ' + locals.queryStyle.split(',').join(', ') });
+                }
+                if (locals.queryNoEstimate) {
+                    activePills.push({ key: 'noEstimate', label: 'Nicht geschätzt' });
                 }
             %>
 
@@ -332,7 +321,7 @@
                             <button onclick="clearFilterParam('<%= pill.key %>')" class="hover:text-red-500 font-bold ml-1 text-sm focus:outline-none transition-colors" title="<%= t('common.delete') %>">&times;</button>
                         </span>
                     <% }) %>
-                    <button onclick="clearAllFilters()" class="text-xs text-red-500 hover:text-red-600 font-bold ml-2 underline transition-colors cursor-pointer">
+                    <button onclick="clearAllFilters()" class="text-xs text-primary-theme hover:brightness-110 font-bold ml-2 underline transition-colors cursor-pointer">
                         <%= t('collection.clear_all') %>
                     </button>
                 </div>
@@ -355,7 +344,7 @@
                                     loading="lazy">
 
                                 <span
-                                    class="absolute bottom-2 left-2 z-20 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md border border-white/10 shadow-sm bg-[#ff89a9]/90">
+                                    class="absolute bottom-2 left-2 z-20 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md border border-white/10 shadow-sm opacity-90 bg-[var(--highlight)] text-[var(--highlight-text)]">
                                     <%= t('media.vinyl') %>
                                 </span>
                             </div>
@@ -475,6 +464,7 @@
                     <span id="estimateCount">0 / --</span>
                     <span id="estimatePercent">0%</span>
                 </div>
+                <div id="estimateStatus" class="text-xs text-center opacity-60 mt-2 h-4"></div>
             </div>
 
             <div id="estimateResult" class="hidden text-center space-y-4">
@@ -504,6 +494,10 @@
             </div>
 
             <div id="startEstimateBtn" class="mt-6 text-center">
+                <label class="flex items-center justify-center gap-2 text-xs opacity-70 mb-4 cursor-pointer">
+                    <input type="checkbox" id="forceRefreshCheck" class="rounded">
+                    <%= t('modal.force_refresh_label') %>
+                </label>
                 <button onclick="startEstimation()"
                     class="bg-primary-theme hover:brightness-110 text-white font-bold py-3 px-8 rounded-xl transition-colors">
                     <%= t('modal.start_btn') %>
@@ -517,7 +511,6 @@
         let currentSort = '<%= currentSort %>';
         const filterInput = document.getElementById('filterInput');
         const locationInput = document.getElementById('locationInput');
-        const artistInput = document.getElementById('artistInput');
         let currentLimit = <%= locals.queryLimit %>;
         let currentDecade = '<%= locals.queryDecade || "" %>';
         let currentStyle = '<%= locals.queryStyle || "" %>';
@@ -568,7 +561,6 @@
 
             validateAndSetUrlSearchParamString('limit', currentLimit);
             validateAndSetUrlSearchParamString('sort', currentSort);
-            validateAndSetUrlSearchParamString('artist', artistInput?.value);
             validateAndSetUrlSearchParamString('filterMode', currentFilterMode);
 
             url.searchParams.set('page', 1);
@@ -593,6 +585,17 @@
                 reloadPage();
             });
         });
+
+        function toggleNoEstimate() {
+            const url = new URL(window.location.href);
+            if (url.searchParams.get('noEstimate') === '1') {
+                url.searchParams.delete('noEstimate');
+            } else {
+                url.searchParams.set('noEstimate', '1');
+            }
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+        }
 
         function clearFilterParam(key) {
             const url = new URL(window.location.href);
@@ -759,12 +762,6 @@
                     if (btn) btn.classList.remove('ring-1', 'ring-primary-theme', 'border-primary-theme');
                 }
             });
-
-            const acMenu = document.getElementById('artistAutocomplete');
-            const acInput = document.getElementById('artistInput');
-            if (acMenu && !acMenu.contains(e.target) && e.target !== acInput) {
-                acMenu.classList.add('hidden');
-            }
         });
 
         ['genre-multi-select', 'style-multi-select', 'sort-menu', 'decade-menu'].forEach(id => {
@@ -775,43 +772,6 @@
                 });
             }
         });
-
-        // Artist autocomplete
-        const allArtists = <%- JSON.stringify(artistList || []) %>;
-        const artistAutocompleteEl = document.getElementById('artistAutocomplete');
-
-        if (artistInput && artistAutocompleteEl) {
-            artistInput.addEventListener('input', () => {
-                const val = artistInput.value.trim().toLowerCase();
-                if (val.length < 1) {
-                    artistAutocompleteEl.classList.add('hidden');
-                    return;
-                }
-                const matches = allArtists.filter(a => a.toLowerCase().includes(val)).slice(0, 15);
-                if (matches.length === 0) {
-                    artistAutocompleteEl.classList.add('hidden');
-                    return;
-                }
-                artistAutocompleteEl.innerHTML = matches.map(m =>
-                    `<button type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-primary-theme/10 hover:text-primary-theme transition-colors cursor-pointer truncate"
-                        onclick="selectArtist('${m.replace(/'/g, "\\'")}')">${m}</button>`
-                ).join('');
-                artistAutocompleteEl.classList.remove('hidden');
-            });
-
-            artistInput.addEventListener('focus', () => {
-                if (artistInput.value.trim().length >= 1) {
-                    artistInput.dispatchEvent(new Event('input'));
-                }
-            });
-        }
-
-        function selectArtist(name) {
-            artistInput.value = name;
-            artistAutocompleteEl.classList.add('hidden');
-            reloadPage();
-        }
-    
 
     <% if (user.isAdmin) { %>
         const socket = io({
@@ -875,6 +835,8 @@
 
         async function startEstimation() {
             startBtn.classList.add('hidden');
+            const statusSpan = document.getElementById('estimateStatus');
+            const forceRefresh = document.getElementById('forceRefreshCheck')?.checked;
             try {
                 const res = await fetch('<%= baseUrl %>/api/collection/ids?type=music');
                 const data = await res.json();
@@ -890,18 +852,26 @@
 
                 countSpan.innerText = `0 / ${totalAlbums}`;
 
+                const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
                 for (const album of albumsToEstimate) {
-                    await estimateOneAlbum(album.discogs_id, album.quantity || 1);
+                    const lastUpdated = album.estimated_price?.updated_at
+                        ? new Date(album.estimated_price.updated_at).getTime() : 0;
+                    // A prior rate-limited attempt never set updated_at, so it's
+                    // always retried; successful, recent estimates are skipped
+                    // unless the user explicitly asked for a full re-check.
+                    const skip = !forceRefresh && lastUpdated > thirtyDaysAgo;
+
+                    if (!skip) {
+                        await estimateOneAlbum(album.discogs_id, album.quantity || 1, statusSpan);
+                    }
                     currentProcessed++;
 
                     const percent = Math.round((currentProcessed / totalAlbums) * 100);
                     if (progressBar) progressBar.style.width = percent + '%';
                     if (percentSpan) percentSpan.innerText = percent + '%';
-
                     if (countSpan) countSpan.innerText = `${currentProcessed} / ${totalAlbums}`;
-
-                    await new Promise(r => setTimeout(r, 500));
                 }
+                if (statusSpan) statusSpan.innerText = '';
                 showResults();
             } catch (err) {
                 alert(`${estimateErrorMsg} : ${err.message}`);
@@ -909,15 +879,28 @@
             }
         }
 
-        async function estimateOneAlbum(id, quantity) {
+        // Fetches one album's estimate. On a Discogs rate-limit response, it
+        // waits out the server-reported retry window (instead of silently
+        // moving on and leaving the rest of the run wrong) and retries once.
+        async function estimateOneAlbum(id, quantity, statusSpan, isRetry = false) {
             try {
                 const res = await fetch(`<%= baseUrl %>/api/estimate/${id}`);
                 const data = await res.json();
+
                 if (data.success && data.price) {
                     const val = data.price.value * quantity;
                     totalPriceVG += val;
                     totalPriceMin += val;
                     totalPriceMax += (val * 1.3);
+                    return;
+                }
+
+                if (data.error === 'rate_limited' && !isRetry) {
+                    const wait = Math.min(data.retryAfter || 60, 90);
+                    if (statusSpan) statusSpan.innerText = `Discogs Rate-Limit erreicht, warte ${wait}s...`;
+                    await new Promise(r => setTimeout(r, wait * 1000));
+                    if (statusSpan) statusSpan.innerText = '';
+                    await estimateOneAlbum(id, quantity, statusSpan, true);
                 }
             } catch (e) { }
         }

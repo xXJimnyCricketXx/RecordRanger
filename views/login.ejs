@@ -1,3 +1,19 @@
+<%
+  const THEMES = (typeof locals.allThemes !== 'undefined') ? locals.allThemes : {};
+  let activePresetKey = 'ranger';
+  if (typeof settings !== 'undefined' && settings && settings.theme && settings.theme.preset) {
+      activePresetKey = settings.theme.preset;
+  }
+  const safeFallback = { bg: '#171717', card: '#262626', navbar: '#0a0a0a', text: '#ffffff', highlight: '#ff89a9', highlightText: '#232323' };
+  const activeDarkTheme = (THEMES[activePresetKey] && THEMES[activePresetKey].dark) || (THEMES['ranger'] && THEMES['ranger'].dark) || safeFallback;
+  const bgColor = activeDarkTheme.bg || safeFallback.bg;
+  const cardColor = activeDarkTheme.card || safeFallback.card;
+  const footerColor = activeDarkTheme.footer || activeDarkTheme.navbar || safeFallback.navbar;
+  const textColor = activeDarkTheme.text || safeFallback.text;
+  const highlightColor = activeDarkTheme.highlight || safeFallback.highlight;
+  const highlightTextColor = activeDarkTheme.highlightText || '#fff';
+  const borderColor = 'rgba(255,255,255,0.1)'; // matches --border-color used by the shared header/footer in dark mode
+%>
 <!DOCTYPE html>
 <html lang="<%= currentLng %>">
 <head>
@@ -16,17 +32,38 @@
   <link rel="stylesheet" href="<%= baseUrl %>/styles/style.css">
 
   <style>
-    body { background: #0f0f0f; color: #fff; font-family: 'Poppins', sans-serif; overflow-x: hidden; }
-    .form-bg { background: #18181b; border: 1px solid #23232b; }
-    input, input::placeholder { background: #23232b !important; color: #fff !important; }
-    input:focus { outline: none; box-shadow: 0 0 0 2px #2563eb; border-color: #2563eb; }
+    body { background: <%= bgColor %>; color: <%= textColor %>; font-family: 'Poppins', sans-serif; overflow-x: hidden; }
+    .form-bg { background: <%= cardColor %>; border: 1px solid <%= borderColor %>; }
+    input, input::placeholder { background: rgba(255,255,255,0.05) !important; color: <%= textColor %> !important; }
+    input { border: 1px solid <%= borderColor %> !important; }
+    input:focus { outline: none; box-shadow: 0 0 0 2px <%= highlightColor %>; border-color: <%= highlightColor %> !important; }
     .password-toggle { color: #aaa; }
-    .password-toggle:hover { color: #fff; }
+    .password-toggle:hover { color: <%= textColor %>; }
     .error { color: #f87171; }
+
+    .btn-login {
+        background: <%= highlightColor %>;
+        color: <%= highlightTextColor %>;
+    }
+    .btn-login:hover { filter: brightness(1.1); }
+
+    .login-footer { background: <%= footerColor %>; border-top: 1px solid <%= borderColor %>; }
+
+    .version-pill {
+        display: inline-block;
+        background: <%= cardColor %>;
+        border: 1px solid <%= borderColor %>;
+        color: <%= highlightColor %>;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        border-radius: 999px;
+        padding: 2px 14px;
+    }
   </style>
 </head>
 <body class="flex flex-col min-h-screen">
-  <div class="flex-grow flex items-center justify-center p-4 bg-[#0f0f0f]">
+  <div class="flex-grow flex items-center justify-center p-4">
     <section class="w-full max-w-md">
       <div class="text-center mb-8">
         <img src="<%= baseUrl %>/ressources/recordranger-logo-dark.png" alt="RecordRanger!" class="mx-auto h-16 w-auto">
@@ -34,7 +71,7 @@
       
       <div class="form-bg rounded-2xl shadow-xl p-8 transition-all">
         <h1 class="text-3xl font-bold text-white mb-8 text-center">
-          👋 <%= t('login.welcome') %>
+          <%= t('login.title') %>
         </h1>
         
         <form action="<%= baseUrl %>/login" class="space-y-6">
@@ -75,9 +112,9 @@
             </div>
           </div>
     
-          <button 
-            type="submit" 
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-[1.02]">
+          <button
+            type="submit"
+            class="btn-login w-full font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-[1.02]">
             <%= t('login.submit_btn') %>
           </button>
         </form>
@@ -85,17 +122,11 @@
     </section>
   </div>
 
-  <footer class="mt-auto bg-neutral-900 border-t border-neutral-800 transition-colors duration-300">
-      <div class="max-w-screen-xl mx-auto py-8 px-4">
-          <div class="flex flex-col items-center justify-center space-y-4">
-              <div class="flex items-center gap-2 text-neutral-100 font-bold text-lg tracking-tight">
-                  <img src="<%= baseUrl %>/ressources/recordranger-logo-dark.png" alt="RecordRanger!" class="h-5 w-auto">
-              </div>
-              <div class="text-center">
-                  <p class="text-xs text-neutral-400 mt-1">
-                    <%= t('footer.made_with') %> <i class="fa-solid fa-heart text-red-500 animate-pulse mx-1"></i> <%= t('footer.for_music') %>
-                  </p>
-              </div>
+  <footer class="mt-auto login-footer transition-colors duration-300">
+      <div class="max-w-screen-xl mx-auto py-5 px-4">
+          <div class="flex flex-col items-center justify-center space-y-3">
+              <img src="<%= baseUrl %>/ressources/recordranger-logo-dark.png" alt="RecordRanger!" class="h-9 w-auto">
+              <span class="version-pill">v<%= appVersion %></span>
           </div>
       </div>
   </footer>

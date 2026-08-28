@@ -91,9 +91,9 @@
                         <span class="opacity-60 text-sm">
                             <%= t('settings.language_label') %>
                         </span>
-                        <form action="<%= baseUrl %>/settings/update-language" method="POST" class="flex items-center">
+                        <form action="<%= baseUrl %>/settings/update-language" method="POST" class="relative group flex items-center">
                             <select name="language" onchange="this.form.submit()"
-                                class="bg-black/5 dark:bg-white/5 border border-transparent text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-theme focus:border-primary-theme block w-full p-3 transition-colors outline-none cursor-pointer">
+                                class="select-theme bg-black/5 dark:bg-white/5 border border-transparent text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-theme focus:border-primary-theme block w-full pl-3 py-3 transition-colors outline-none cursor-pointer">
                                 <option value="fr" class="bg-white dark:bg-[#1a1a1a]" <%=currentLng==='fr' ? 'selected'
                                     : '' %>>
                                     Français
@@ -115,6 +115,7 @@
                                     Italiano
                                 </option>
                             </select>
+                            <i class="fa-solid fa-chevron-down text-[10px] opacity-20 group-hover:opacity-60 transition-all absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         </form>
                     </div>
                 </div>
@@ -131,9 +132,9 @@
                             <%= t('settings.currency_label') %>
                         </span>
 
-                        <form action="<%= baseUrl %>/settings/update-currency" method="POST" class="flex items-center">
+                        <form action="<%= baseUrl %>/settings/update-currency" method="POST" class="relative group flex items-center">
                             <select name="currency" onchange="this.form.submit()"
-                                class="bg-black/5 dark:bg-white/5 border border-transparent text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-theme focus:border-primary-theme block w-full p-3 transition-colors outline-none cursor-pointer">
+                                class="select-theme bg-black/5 dark:bg-white/5 border border-transparent text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-theme focus:border-primary-theme block w-full pl-3 py-3 transition-colors outline-none cursor-pointer">
                                 <option value="EUR" class="bg-white dark:bg-[#1a1a1a]" <%=user.currency==='EUR'
                                     ? 'selected' : '' %>>
                                     <%= t('settings.currency_eur') %>
@@ -149,6 +150,7 @@
                                     <%= t('settings.currency_gbp') %>
                                 </option>
                             </select>
+                            <i class="fa-solid fa-chevron-down text-[10px] opacity-20 group-hover:opacity-60 transition-all absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         </form>
                     </div>
                 </div>

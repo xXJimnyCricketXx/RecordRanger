@@ -227,6 +227,7 @@
                         </a>
                     </div>
 
+
                     <div class="col-span-2 border-t border-black/10 dark:border-white/10 mt-2 pt-4 transition-colors">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-xs opacity-50 uppercase font-bold">
@@ -237,27 +238,35 @@
                                     onclick="fetchEstimation('<%= album.discogs_id %>', '<%= album.quantity || 1 %>', '<%= album.sleeve_condition || '' %>')"
                                     class="text-xs bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white px-2 py-1 rounded transition-colors flex items-center gap-1 border border-transparent">
                                     <i class="fa-solid fa-rotate" id="btnEstimateIcon"></i>
-                                    <%= album.estimated_price && album.estimated_price.value ? t('detail.refresh_info_btn') || 'Neu abrufen' : t('detail.calculate_btn') %>
+                                    <%= album.estimated_price && album.estimated_price.value ? t('detail.recalculate_btn') : t('detail.calculate_btn') %>
                                 </button>
                             <% } %>
                         </div>
 
                         <% if (album.estimated_price && album.estimated_price.value) { %>
-                            <div id="storedPrice" class="flex items-baseline gap-2">
-                                <span class="text-2xl font-black text-primary-theme">
-                                    <%=
-                                        new Intl.NumberFormat(currentLng === 'de' ? 'de-DE' : 'en-US', {
-                                            style: 'currency',
-                                            currency: album.estimated_price.currency || 'USD',
-                                            maximumFractionDigits: 2
-                                        }).format(album.estimated_price.value * (album.quantity || 1))
-                                    %>
-                                </span>
-                                <span class="text-xs opacity-40">
+                            <div id="storedPrice" class="flex flex-col gap-1">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-2xl font-black text-primary-theme">
+                                        <%=
+                                            new Intl.NumberFormat(currentLng === 'de' ? 'de-DE' : 'en-US', {
+                                                style: 'currency',
+                                                currency: album.estimated_price.currency || 'USD',
+                                                maximumFractionDigits: 2
+                                            }).format(album.estimated_price.value * (album.quantity || 1))
+                                        %>
+                                    </span>
                                     <% if (album.estimated_price.updated_at) { %>
+                                    <span class="text-xs opacity-40">
                                         Stand: <%= new Date(album.estimated_price.updated_at).toLocaleDateString(currentLng === 'de' ? 'de-DE' : 'en-US') %>
+                                    </span>
                                     <% } %>
-                                </span>
+                                </div>
+                                <% if (album.discogs_id) { %>
+                                <a href="https://www.discogs.com/release/<%= album.discogs_id %>" target="_blank"
+                                   class="text-xs opacity-50 hover:opacity-100 underline transition-opacity w-fit">
+                                    Discogs-Seite ansehen ↗
+                                </a>
+                                <% } %>
                             </div>
                         <% } else { %>
                             <div id="storedPrice" class="text-sm opacity-40 italic">
@@ -307,18 +316,15 @@
                                                         <%= t('confirm_vinyl.field_title') %>
                                                     </th>
                                                     <th class="px-4 py-3 text-right">
-                                                        <%= t('confirm_vinyl.year_label')==='Année' ? 'Durée'
-                                                            : 'Duration' %>
+                                                        <%= t('confirm_vinyl.year_label')==='Année' ? 'Durée' : 'Duration' %>
                                                     </th>
                                                 </tr>
                                             </thead>
                                             <tbody
                                                 class="divide-y divide-black/5 dark:divide-white/5 transition-colors">
-                                                <% album.tracklist.forEach(track=> { %>
-                                                    <tr
-                                                        class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                                                        <td
-                                                            class="px-4 py-3 text-center font-mono text-primary-theme font-bold opacity-80">
+                                                <% album.tracklist.forEach((track, idx) => { %>
+                                                    <tr class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                                                        <td class="px-4 py-3 text-center font-mono text-primary-theme font-bold opacity-80">
                                                             <%= track.position %>
                                                         </td>
                                                         <td class="px-4 py-3 font-medium transition-colors">
@@ -328,7 +334,7 @@
                                                             <%= track.duration %>
                                                         </td>
                                                     </tr>
-                                                    <% }) %>
+                                                <% }) %>
                                             </tbody>
                                         </table>
                                     </div>
@@ -357,7 +363,6 @@
                                         </div>
                                         <% } %>
                             </div>
-                        </div>
 
                         <% if (user.isAdmin) { %>
                             <div
@@ -476,7 +481,7 @@
                     const isMarket = data.source === 'market';
                     const labelText = isMarket ? translations.market_price : translations.historical_estimate;
                     const colorClass = isMarket ? "text-primary-theme" : "text-blue-500";
-                    const icon = isMarket ? '<i class="fa-solid fa-shop mr-1"></i>' : '<i class="fa-solid fa-history mr-1"></i>';
+                    const iconHtml = isMarket ? '<i class="fa-solid fa-shop mr-1"></i>' : '<i class="fa-solid fa-history mr-1"></i>';
 
                     let quantityMarkup = '';
                     let finalDisplayPrice = fmtIndividual;
@@ -499,7 +504,7 @@
                     resultDiv.innerHTML = `
                     <div class="flex flex-col items-center justify-center py-4 bg-black/5 dark:bg-white/5 rounded-lg border border-transparent mt-2 transition-colors">
                         <span class="text-[10px] opacity-60 uppercase font-bold mb-1 flex items-center">
-                            ${icon} ${labelText}
+                            ${iconHtml} ${labelText}
                         </span>
                         <span class="text-3xl font-black ${colorClass} mb-0 transition-colors">${finalDisplayPrice}*</span>
                         ${quantityMarkup}
@@ -513,19 +518,28 @@
                     </div>
                 `;
                     loader.classList.add('hidden');
+                    if (storedPriceDiv) storedPriceDiv.classList.add('hidden');
                     resultDiv.classList.remove('hidden');
-
-                    // Update stored price display in place (route already saved to DB)
-                    if (storedPriceDiv) {
-                        const today = new Date().toLocaleDateString(currentLocale);
-                        storedPriceDiv.innerHTML = `
-                            <span class="text-2xl font-black text-primary-theme">
-                                ${new Intl.NumberFormat(currentLocale, { style: 'currency', currency: currency }).format(individualPrice * quantity)}
-                            </span>
-                            <span class="text-xs opacity-40 ml-2">Stand: ${today}</span>`;
-                    }
                     if (icon) icon.className = 'fa-solid fa-rotate';
                     btn.disabled = false;
+                } else {
+                    loader.classList.add('hidden');
+                    if (icon) icon.className = 'fa-solid fa-rotate';
+                    btn.disabled = false;
+                    const isRateLimited = data.error === 'rate_limited';
+                    resultDiv.innerHTML = isRateLimited ? `
+                        <div class="text-xs opacity-50 italic py-2 flex items-center gap-2">
+                            <i class="fa-solid fa-clock"></i>
+                            Discogs Rate-Limit erreicht – bitte in ${data.retryAfter || 60}s erneut versuchen
+                        </div>` : `
+                        <div class="text-xs opacity-50 italic py-2 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info"></i>
+                            Keine Marktdaten auf Discogs verfügbar
+                            <% if (album.discogs_id) { %>
+                            – <a href="https://www.discogs.com/release/<%= album.discogs_id %>" target="_blank" class="underline hover:opacity-100 transition-opacity">Discogs-Seite ansehen ↗</a>
+                            <% } %>
+                        </div>`;
+                    resultDiv.classList.remove('hidden');
                 }
             } catch (err) {
                 loader.innerHTML = `<span class="opacity-50 text-xs italic">${translations.unavailable_data}</span>`;
@@ -590,6 +604,9 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
+                    if (discogsId) {
+                        try { await fetch(`<%= baseUrl %>/api/estimate/${discogsId}?condition=`); } catch (_) {}
+                    }
                     window.location.reload();
                 } else {
                     alert(<%- JSON.stringify(t('detail.refresh_info_error')) %>);
@@ -627,5 +644,6 @@
             background: rgba(255, 255, 255, 0.2);
         }
     </style>
+
 
     <%- include('partials/footer') %>

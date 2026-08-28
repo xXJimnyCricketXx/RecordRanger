@@ -57,7 +57,7 @@
                             <img src="<%= album.cover_image %>"
                                 class="relative z-10 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
 
-                            <span class="absolute top-2 right-2 z-20 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md border border-white/10 shadow-sm bg-[#ff89a9]/90 text-white">
+                            <span class="absolute top-2 right-2 z-20 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md border border-white/10 shadow-sm opacity-90 bg-[var(--highlight)] text-[var(--highlight-text)]">
                                 <%= t('media.vinyl') %>
                             </span>
                         </div>
@@ -95,7 +95,7 @@
                             <img src="<%= album.cover_image %>"
                                 class="relative z-10 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
 
-                            <span class="absolute top-2 right-2 z-20 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md border border-white/10 shadow-sm bg-[#ff89a9]/90 text-white">
+                            <span class="absolute top-2 right-2 z-20 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md border border-white/10 shadow-sm opacity-90 bg-[var(--highlight)] text-[var(--highlight-text)]">
                                 <%= t('media.vinyl') %>
                             </span>
                         </div>
@@ -122,8 +122,11 @@
     </section>
 
     <section>
-        <h2 class="text-xl md:text-2xl font-bold mb-6 px-2"><%= t('index.section_stats') %></h2>
-        
+        <div class="flex items-center gap-2 mb-6 px-2">
+            <span class="w-2 h-6 md:h-8 bg-primary-theme rounded-full inline-block"></span>
+            <h2 class="text-xl md:text-2xl font-bold"><%= t('index.section_stats') %></h2>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-4 md:gap-6">
             <%
             const widgetConfig = {
@@ -145,21 +148,21 @@
                 const tW = topConfigs[id];
 
                 if (w) { %>
-                    <div class="card-theme p-6 rounded-2xl flex items-center justify-between transition-all hover:scale-[1.02] md:col-span-2">
+                    <div class="card-theme p-6 rounded-2xl flex items-center gap-4 transition-all hover:scale-[1.02] md:col-span-2">
+                        <div class="w-12 h-12 rounded-full <%= w.color %> flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="fa-solid <%= w.icon %> fa-fw"></i>
+                        </div>
                         <div>
                             <p class="opacity-60 font-medium text-xs uppercase tracking-wider mb-1"><%= w.label %></p>
                             <h3 class="text-3xl font-bold">
                                 <%= w.val %> <% if(w.unit){ %><span class="text-base font-normal opacity-50"><%= w.unit %></span><% } %>
                             </h3>
                         </div>
-                        <div class="w-10 h-10 rounded-full <%= w.color %> flex items-center justify-center text-lg">
-                            <i class="fa-solid <%= w.icon %>"></i>
-                        </div>
                     </div>
                 <% } else if (tW) { %>
                     <div class="card-theme p-6 rounded-2xl flex items-center gap-4 transition-all hover:scale-[1.02] min-w-0 md:col-span-2">
                         <div class="w-12 h-12 rounded-full <%= tW.color %> flex items-center justify-center text-xl flex-shrink-0">
-                            <i class="fa-solid <%= tW.icon %>"></i>
+                            <i class="fa-solid <%= tW.icon %> fa-fw"></i>
                         </div>
                         <div class="min-w-0">
                             <p class="opacity-60 font-medium text-xs uppercase tracking-wider truncate"><%= tW.label %></p>
