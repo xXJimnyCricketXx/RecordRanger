@@ -29,45 +29,17 @@
                     <%= t('perso.themes.title') %>
                 </h2>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold uppercase tracking-widest opacity-60">
-                            <i class="fa-solid fa-house mr-1"></i>
-                            <%= t('perso.themes.home') %>
-                        </label>
-                        <select name="homePreset"
-                            class="w-full bg-black/5 dark:bg-black/20 border border-transparent focus:border-primary-theme rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-theme/20 outline-none transition-all">
-                            <% for (const [key, val] of Object.entries(presets)) { %>
-                                <option value="<%= key %>" <%=(settings.theme.home.preset===key) ? 'selected' : '' %>
-                                    class="dark:bg-neutral-900">
-                                    <%= val.label %>
-                                </option>
-                                <% } %>
-                        </select>
-                    </div>
-
-                    <% const themeCats=[ {key: 'music' , label: t('perso.themes.music'), icon: 'fa-music' } ] %>
-
-                        <% themeCats.forEach((tTheme)=> { %>
-                            <div class="space-y-2">
-                                <label class="block text-xs font-bold uppercase tracking-widest opacity-60">
-                                    <i class="fa-solid <%= tTheme.icon %> mr-1"></i>
-                                    <%= tTheme.label %>
-                                </label>
-                                <select name="<%= tTheme.key %>Preset"
-                                    class="w-full bg-black/5 dark:bg-black/20 border border-transparent focus:border-primary-theme rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-theme/20 outline-none transition-all">
-                                    <% for (const [key, val] of Object.entries(presets)) { %>
-                                        <option value="<%= key %>" <%=(settings.theme[tTheme.key] &&
-                                            settings.theme[tTheme.key].preset===key) ? 'selected' : '' %>
-                                            class="dark:bg-neutral-900">
-                                            <%= val.label %>
-                                        </option>
-                                        <% } %>
-                                </select>
-                            </div>
-                            <% }) %>
-
+                <div class="max-w-md relative group">
+                    <select name="preset"
+                        class="select-theme w-full bg-black/5 dark:bg-black/20 border border-transparent focus:border-primary-theme rounded-xl pl-4 py-3 focus:ring-2 focus:ring-primary-theme/20 outline-none transition-all">
+                        <% for (const [key, val] of Object.entries(presets)) { %>
+                            <option value="<%= key %>" <%= (settings.theme && settings.theme.preset === key) ? 'selected' : '' %>
+                                class="dark:bg-neutral-900">
+                                <%= val.label %>
+                            </option>
+                            <% } %>
+                    </select>
+                    <i class="fa-solid fa-chevron-down text-[10px] opacity-20 group-hover:opacity-60 transition-all absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                 </div>
             </div>
 
@@ -101,7 +73,7 @@
                                     settings.statsWidgets.includes(opt.id)) ? 'checked' : '' %>
                                 class="sr-only">
                                 <div
-                                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-transparent bg-black/5 dark:bg-white/5 text-[#232323] opacity-80 transition-all duration-300 font-bold group-hover:bg-black/10 dark:group-hover:bg-white/10 group-has-[:checked]:bg-[#ff89a9] group-has-[:checked]:border-[#ff89a9] group-has-[:checked]:opacity-100 group-has-[:checked]:shadow-lg group-has-[:checked]:-translate-y-0.5">
+                                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-transparent bg-black/5 dark:bg-white/5 opacity-80 transition-all duration-300 font-bold group-hover:bg-black/10 dark:group-hover:bg-white/10 group-has-[:checked]:bg-[var(--highlight)] group-has-[:checked]:text-[var(--highlight-text)] group-has-[:checked]:border-[var(--highlight)] group-has-[:checked]:opacity-100 group-has-[:checked]:shadow-lg group-has-[:checked]:-translate-y-0.5">
                                     <i
                                         class="fa-solid fa-plus text-[10px] opacity-40 block group-has-[:checked]:hidden transition-transform"></i>
                                     <i

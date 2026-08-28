@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const BlockedIP = require("../models/blockedIP");
 const LoginLog = require("../models/LoginLog");
@@ -11,6 +11,7 @@ const axios = require("axios");
 const https = require("https");
 const Item = require("../models/Item");
 const Vinyl = require("../models/Vinyl");
+const { listBackups } = require("../utils/backupScheduler");
 
 /**
  * routes/adminRoutes.js
@@ -88,7 +89,15 @@ async function loadAdminData() {
   const visibilitySettings =
     (await Settings.findOne().populate("visibility.hiddenItems").lean()) || {};
 
-  return { users, blockedIps, logs, allGenres, visibilitySettings };
+  const backups = listBackups();
+  const backupSettings = (visibilitySettings.backupSchedule) || {
+    enabled: false, time: "03:00", intervalDays: 1, retention: 3, lastRunAt: null
+  };
+
+  const collectionCount = await Item.countDocuments({ owner: adminId, in_wishlist: false });
+  const wishlistCount = await Item.countDocuments({ owner: adminId, in_wishlist: true });
+
+  return { users, blockedIps, logs, allGenres, visibilitySettings, backups, backupSettings, collectionCount, wishlistCount };
 }
 
 // DASHBOARD (GET)
@@ -233,8 +242,7 @@ router.post(
   async (req, res) => {
     try {
       const {
-        homePreset,
-        musicPreset,
+        preset,
         statsWidgets,
       } = req.body;
 
@@ -245,8 +253,7 @@ router.post(
           : [];
 
       const update = {
-        "theme.home.preset": homePreset,
-        "theme.music.preset": musicPreset,
+        "theme.preset": preset,
         statsWidgets: stats,
       };
 
@@ -461,6 +468,29 @@ router.post(
     }
   },
 );
+
+// Danger Zone: wipe the entire collection or the entire wishlist. Both are
+// full, unscoped deletes (unlike delete-last-items) so the frontend must
+// require a typed confirmation before calling these.
+router.post("/danger/wipe-collection", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const result = await Item.deleteMany({ owner: req.user._id, in_wishlist: false });
+    res.json({ deleted: result.deletedCount });
+  } catch (err) {
+    console.error("[ERR] wipe-collection:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/danger/wipe-wishlist", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const result = await Item.deleteMany({ owner: req.user._id, in_wishlist: true });
+    res.json({ deleted: result.deletedCount });
+  } catch (err) {
+    console.error("[ERR] wipe-wishlist:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.post(
   "/refresh-all-music-metadata",

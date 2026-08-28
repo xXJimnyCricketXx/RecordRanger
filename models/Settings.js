@@ -1,14 +1,9 @@
 const mongoose = require('mongoose');
 
-const themeSchema = {
-    preset: { type: String, default: 'default' }
-};
-
 const settingsSchema = new mongoose.Schema({
-    siteName: { type: String, default: 'RecordRanger' },
+    siteName: { type: String, default: 'RecordRanger!' },
     theme: {
-        home:    { type: Object, default: themeSchema },
-        music:   { type: Object, default: themeSchema }
+        preset: { type: String, default: 'ranger' }
     },
     statsWidgets: {
         type: [String],
@@ -19,6 +14,13 @@ const settingsSchema = new mongoose.Schema({
         hiddenItems: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Item' }],
         hiddenGenres: [{ type: String }],
         hiddenTypes: [{ type: String }]
+    },
+    backupSchedule: {
+        enabled:      { type: Boolean, default: false },
+        time:         { type: String,  default: '03:00' }, // HH:mm, 24h
+        intervalDays: { type: Number,  default: 1 },
+        retention:    { type: Number,  default: 3 },
+        lastRunAt:    { type: Date,    default: null }
     }
 });
 

@@ -26,7 +26,8 @@
     "confirm_delete": "Êtes-vous sûr ?",
     "show": "Afficher",
     "apply": "Appliquer",
-    "filters": "Filtres"
+    "filters": "Filtres",
+    "forbidden": "Accès refusé."
   },
   "settings": {
     "page_title": "Paramètres du compte",
@@ -36,7 +37,7 @@
     "username_label": "Nom d'utilisateur",
     "email_label": "Email",
     "preferences_title": "Préférences",
-    "language_label": "Langue de l'interface",
+    "language_label": "Langue",
     "security_title": "Sécurité",
     "password_label": "Mot de passe",
     "last_change": "Dernière modif",
@@ -69,15 +70,17 @@
     "too_many_attempts_timed": "Trop de tentatives. Réessaie dans {{seconds}} secondes.",
     "too_many_attempts_blocked": "Trop de tentatives. Réessaie dans 5 minutes.",
     "404_title": "Oups ! Sillon sans issue.",
-    "404_desc": "La page que vous cherchez semble avoir été rayée de la collection ou le module associé est actuellement désactivé."
+    "404_desc": "La page que vous cherchez semble avoir été rayée de la collection."
   },
   "messages": {
     "username_current": "C'est votre pseudo actuel.",
     "username_available": "Pseudo disponible !",
     "generic_error": "Une erreur est survenue.",
     "avatar_upload_error": "Erreur lors de l'envoi de la photo.",
+    "avatar_error": "Erreur lors de l'envoi de la photo.",
     "avatar_updated": "Photo de profil mise à jour !",
     "password_updated": "Mot de passe mis à jour.",
+    "password_success": "Mot de passe mis à jour.",
     "theme_updated": "Thème mis à jour.",
     "language_updated": "Langue mise à jour.",
     "user_created": "Utilisateur créé avec succès !",
@@ -92,44 +95,11 @@
     "batch_barcode_success": "{{count}} codes-barres mis à jour !"
   },
   "media": {
-    "vinyl": "Vinyle",
-    "vinyls": "Vinyles",
-    "cd": "CD",
-    "cds": "CDs",
-    "sacd": "SACD",
     "cdr": "CDr",
-    "cassette": "Cassette",
-    "cassettes": "Cassettes",
-    "hardcover": "Relié",
-    "paperback": "Broché",
-    "manga": "Manga",
-    "mangas": "Mangas",
-    "comic": "Comics",
-    "comics": "Comics",
-    "dvd": "DVD",
-    "bluray": "Blu-ray",
-    "blurays": "Blu-rays",
-    "4k": "4K Ultra HD",
-    "vhs": "VHS",
-    "laserdisc": "Laserdisc",
-    "hardcover_pl": "Livres Reliés",
-    "paperback_pl": "Livres Brochés",
-    "dvds": "DVDs",
-    "4k_pl": "4K Ultra HDs",
-    "vhss": "VHS",
-    "laserdiscs": "Laserdiscs",
-    "graphic_novel": "Roman Graphique",
     "music": "Musique",
-    "books": "Livres",
-    "dvd_gen": "Films / Séries",
-    "format": "Format",
-    "games": "Jeux Vidéo",
-    "game": "Jeu Vidéo",
-    "physical": "Physique",
-    "collector": "Collector",
-    "limited": "Édition Limitée",
-    "steelbook": "Steelbook",
-    "book": "Livre"
+    "sacd": "SACD",
+    "vinyl": "Vinyle",
+    "vinyls": "Vinyles"
   },
   "index": {
     "welcome": "Salut",
@@ -148,20 +118,12 @@
   },
   "stats": {
     "total_label": "Total Collection",
-    "books_total_label": "Total Livres",
-    "dvd_total_label": "Total Vidéos",
     "top_artist_label": "Artiste Favori",
-    "top_author_label": "Auteur Favori",
-    "top_director_label": "Réalisateur Favori",
     "top_genre_label": "Genre Favori",
     "top_label_label": "Label Favori",
-    "top_publisher_label": "Éditeur Favori",
-    "top_studio_label": "Studio Favori",
     "albums_unit": "albums",
     "owned_times": "Possédé {{count}} fois dans la collection",
-    "games_total_label": "Total Jeux Vidéo",
-    "top_developer_label": "Développeur Favori",
-    "top_game_publisher_label": "Éditeur Favori (Jeux)",
+    "value_label": "Valeur",
     "vinyls_label": "Vinyles",
     "purchase_price": "Prix d'achat",
     "total_value": "Valeur totale",
@@ -175,13 +137,12 @@
   "modal": {
     "estimate_title": "Estimation en cours...",
     "estimate_desc": "Nous interrogeons le marché Discogs pour chaque disque.",
+    "force_refresh_label": "Tout revérifier (y compris les estimations récentes)",
     "avg_label": "Valeur estimée (Moyenne)",
     "condition_hint": "Basé sur l'état \"Very Good+\"",
     "min_label": "Minimum (G)",
     "max_label": "Maximum (Mint)",
-    "start_btn": "Lancer l'analyse",
-    "add_hub_title": "On ajoute quoi ?",
-    "add_hub_subtitle": "Sélectionnez le type de média à intégrer à votre collection"
+    "start_btn": "Lancer l'analyse"
   },
   "add_vinyl": {
     "title": "Ajouter un disque",
@@ -203,11 +164,13 @@
     "filter_ex_year": "Ex: 1994",
     "filter_ex_country": "Ex: France",
     "filter_ex_genre": "Ex: Electronic",
-    "filter_ex_label": "Ex: EMI"
+    "filter_ex_label": "Ex: EMI",
+    "btn_manual": "Saisir manuellement",
+    "manual_title": "Ajouter manuellement",
+    "manual_desc": "Remplissez vous-même tous les champs. Vous pourrez ajouter l'ID Discogs plus tard."
   },
   "admin": {
     "title": "Administration",
-    "modules": "Modules",
     "add_user_btn": "Ajouter un utilisateur",
     "temp_password_hint": "Voici le mot de passe temporaire (copie-le, il ne s'affichera plus) :",
     "users_title": "Utilisateurs",
@@ -221,7 +184,6 @@
     "confirm_delete_user": "SUPPRIMER DÉFINITIVEMENT {{name}} ?",
     "confirm_block_ip": "BLOQUER L'IP {{ip}} ?\nIl ne pourra plus accéder au site.",
     "import_discogs_btn": "Import Discogs",
-    "modules_description": "Activez ou désactivez les modules de RecordRanger",
     "advanced_cd": "Activer les formats spécifiques (SACD, CDr)",
     "advanced_cd_description": "Affiche et recherche spécifiquement les SACD et CDr sur Discogs",
     "delete_last.title": "Supprimer les derniers éléments",
@@ -229,6 +191,18 @@
     "delete_last.kind": "Type d'élément",
     "delete_last.count": "Nombre à supprimer",
     "delete_last.btn": "Supprimer",
+    "danger.title": "Zone dangereuse",
+    "danger.subtitle": "Ces actions sont définitives et irréversibles.",
+    "danger.wipe_collection_title": "Supprimer la collection",
+    "danger.wipe_collection_desc": "Supprime définitivement les {{count}} éléments de votre collection.",
+    "danger.wipe_collection_confirm_word": "SUPPRIMER LA COLLECTION",
+    "danger.wipe_collection_btn": "Supprimer définitivement la collection",
+    "danger.wipe_wishlist_title": "Supprimer la liste de souhaits",
+    "danger.wipe_wishlist_desc": "Supprime définitivement les {{count}} éléments de votre liste de souhaits.",
+    "danger.wipe_wishlist_confirm_word": "SUPPRIMER LA LISTE",
+    "danger.wipe_wishlist_btn": "Supprimer définitivement la liste",
+    "danger.confirm_hint": "Tapez « {{word}} » pour confirmer",
+    "danger.wipe_success": "{{count}} éléments supprimés.",
     "areyousure": "Supprimer les {{count}} derniers éléments de type \"{{kindLabel}}\" ? Cette action est irréversible.",
     "delete_confirm": "{{count}} élément(s) supprimé(s).",
     "table": {
@@ -278,10 +252,32 @@
       "import_error": "Erreur lors de l'importation.",
       "json_error": "Fichier JSON invalide.",
       "confirm_import": "ATTENTION : Cela va supprimer toutes vos données actuelles (albums, utilisateurs, logs) pour les remplacer par le contenu du fichier. Vous serez déconnecté. Continuer ?",
-      "subtitle": "Sauvegardez votre collection ou restaurez une base de données existante.",
-      "title": "Maintenance du système",
       "section_title": "Sauvegarde de la base de données",
-      "section_subtitle": "Exportez ou restaurez l'intégralité de vos données."
+      "section_subtitle": "Exportez ou restaurez l'intégralité de vos données.",
+      "manual_title": "Sauvegarde manuelle",
+      "manual_subtitle": "Sauvegardez votre collection maintenant ou restaurez une base de données existante.",
+      "schedule": {
+        "title": "Sauvegarde automatique",
+        "subtitle": "Sauvegarde automatiquement votre base de données selon un planning.",
+        "enable_label": "Activer la sauvegarde automatique",
+        "time_label": "Heure",
+        "interval_label": "Intervalle (jours)",
+        "retention_label": "Nombre de sauvegardes conservées",
+        "save_btn": "Enregistrer les paramètres",
+        "saved": "Enregistré !",
+        "last_run_label": "Dernière sauvegarde",
+        "never": "Jamais"
+      },
+      "list": {
+        "title": "Sauvegardes existantes",
+        "subtitle": "Sauvegardes créées automatiquement.",
+        "empty": "Aucune sauvegarde automatique pour le moment.",
+        "restore_btn": "Restaurer",
+        "delete_btn": "Supprimer",
+        "restore_confirm": "Restaurer cet état ? Toutes les données actuelles seront remplacées et vous serez déconnecté.",
+        "delete_confirm": "Supprimer définitivement cette sauvegarde ?",
+        "create_now_btn": "Sauvegarder maintenant"
+      }
     },
     "import": {
       "title": "Importation Discogs",
@@ -303,44 +299,14 @@
       "status_init": "Initialisation...",
       "status_processing": "Actualisation : {{current}} / {{total}}",
       "status_finished": "Actualisation terminée !",
-      "status_error": "L'actualisation a échoué.",
-      "refresh_books_title": "Actualiser toutes les métadonnées (Livres)",
-      "refresh_books_subtitle": "Relancer la récupération des données (Hardcover/OpenLibrary) pour les livres.",
-      "refresh_dvds_title": "Actualiser toutes les métadonnées (DVDs)",
-      "refresh_dvds_subtitle": "Relancer la récupération des données (TMDB) pour les DVDs et Blu-Rays.",
-      "refresh_games_title": "Actualiser toutes les métadonnées (Jeux Vidéo)",
-      "refresh_games_subtitle": "Relancer la récupération des données (IGDB) pour les jeux vidéo."
+      "status_error": "L'actualisation a échoué."
     },
     "errors": {
-      "at_least_one_module": "Au moins un module doit être actif.",
-      "missing_api_key": "Impossible d'activer ce module : la clé API est manquante.",
       "help_link": "Consulter le guide de configuration"
     },
     "external_imports": {
       "title": "Imports depuis des services externes",
       "subtitle": "Importez votre bibliothèque depuis vos services préférés."
-    },
-    "goodreads": {
-      "title": "GoodReads",
-      "subtitle": "Importer votre bibliothèque GoodReads",
-      "btn": "Importer un CSV",
-      "modal_subtitle": "Importez vos livres lus, en cours et à lire.",
-      "how_to": "Comment exporter depuis GoodReads ?",
-      "step1": "Allez dans My Books",
-      "step2": "Chercher un bouton orange en bas de la page avec l'icone 🛜",
-      "drop_hint": "Glissez votre fichier ici ou cliquez pour parcourir",
-      "file_ready": "Fichier prêt à être importé",
-      "btn_import": "Lancer l'import",
-      "default_format": "Format par défaut",
-      "default_format_hint": "Utilisé si aucune étagère GoodReads ne permet de le détecter automatiquement.",
-      "rss_url_label": "Lien RSS GoodReads",
-      "rss_url_hint": "Trouvez ce lien sur votre profil GoodReads → flux RSS de votre bibliothèque",
-      "step3": "Copiez l'URL du flux RSS",
-      "step4": "Collez-la ci-dessous et lancez l'import",
-      "warning_title": "Import potentiellement long",
-      "warning_body": "Comptez ~1-2 min pour 200 livres, ~10 min pour 2000. L'import tourne en arrière-plan, vous pouvez naviguer librement.",
-      "default_language": "Langue par défaut",
-      "default_language_hint": "Utilisée si Open Library ne trouve pas la langue. Ex: fr, en, ja, es..."
     },
     "musiksammler": {
       "title": "Musik-Sammler",
@@ -379,7 +345,6 @@
     "refresh": "Rafraîchir",
     "refresh_metadata_btn": "Actualiser les infos",
     "add": "Ajouter",
-    "artist_filter": "Artiste",
     "sort_added": "Date d'ajout",
     "sort_artist": "Artiste",
     "sort_label": "Trier par",
@@ -403,7 +368,7 @@
     "config_title": "Configurer l'album",
     "field_title": "Titre",
     "field_artist": "Artiste",
-    "field_media_type": "Support / Format",
+    "field_media_type": "Type de média",
     "field_format": "Format",
     "field_edition": "Couleur / Édition",
     "edition_placeholder": "Ex: Blue Splatter",
@@ -448,8 +413,9 @@
     "added_at": "Date d'ajout",
     "source": "Source",
     "sleeve_condition": "État de la pochette",
-    "estimation_title": "Estimation (Discogs)",
+    "estimation_title": "Prix marché (Discogs)",
     "calculate_btn": "Calculer",
+    "recalculate_btn": "Recalculer",
     "personal_notes": "Notes personnelles",
     "tracklist_title": "Pistes",
     "no_tracks": "Aucune liste de pistes disponible.",
@@ -464,6 +430,7 @@
     "import_tracklist_btn": "Importer Tracklist",
     "tracklist_not_found": "Tracklist non trouvée sur Discogs",
     "importing": "Importation...",
+    "no_estimate": "Pas encore estimé",
     "no_tracklist": "Aucune tracklist enregistrée.",
     "refresh_info_success": "Métadonnées actualisées avec succès !",
     "refresh_info_error": "Erreur lors de l'actualisation des métadonnées."
@@ -484,7 +451,9 @@
     "theme_light": "Mode Clair",
     "home": "Accueil",
     "wishlist": "Souhaits",
-    "collection": "Collection"
+    "collection": "Collection",
+    "login": "Connexion",
+    "stats": "Statistiques"
   },
   "footer": {
     "made_with": "Développé avec",
@@ -500,7 +469,7 @@
     "submit_btn": "Se connecter"
   },
   "setup": {
-    "title": "Installation RecordRanger",
+    "title": "Installation RecordRanger!",
     "welcome_to": "Bienvenue sur",
     "subtitle": "Votre serveur musical personnel.",
     "admin_config": "Configuration Admin",
@@ -528,88 +497,17 @@
   },
   "perso": {
     "title": "Personnalisation",
-    "subtitle": "Gérez les modules et l'apparence de {{siteName}}",
+    "subtitle": "Personnalisez l'apparence de RecordRanger!",
     "backHome": "Retour à l'accueil",
     "save": "Enregistrer les préférences",
-    "nav_title": "Configuration de la Navigation",
-    "nav_desc": "Choisissez jusqu'à 6 raccourcis à afficher dans votre barre de navigation.",
-    "nav_max": "Vous ne pouvez pas sélectionner plus de 6 raccourcis.",
     "widgets_title": "Widgets de Statistiques",
     "widgets_desc": "Sélectionnez les statistiques que vous souhaitez voir sur la page d'accueil",
     "fastAdd_title": "Ajout rapide",
     "fastAdd_desc": "Si activé, le bouton \"Ajouter un élément\" redirige directement vers le formulaire choisi, sans passer par le menu de sélection.",
     "fastAdd_disabled": "Désactivé (modal)",
-    "modules": {
-      "title": "Modules Actifs",
-      "music": "Musique",
-      "books": "Livres",
-      "dvd": "DVDs",
-      "global": "Général",
-      "games": "Jeux Vidéo"
-    },
     "themes": {
-      "title": "Thèmes & Couleurs",
-      "home": "Page d'Accueil",
-      "music": "Musique",
-      "books": "Livres",
-      "dvd": "Films / DVD",
-      "games": "Jeux Vidéo"
+      "title": "Thème de couleur"
     }
-  },
-  "add_book": {
-    "title": "Ajouter un Livre",
-    "desc": "Recherchez par titre, auteur ou scannez le code-barres (ISBN).",
-    "search_placeholder": "Titre, Auteur ou ISBN...",
-    "btn_scan": "Scanner un ISBN",
-    "results_title": "Résultats",
-    "no_results": "Aucun livre trouvé."
-  },
-  "confirm_book": {
-    "publisher_label": "Éditeur",
-    "isbn_label": "ISBN",
-    "year_label": "Année",
-    "pages_label": "Pages",
-    "description_title": "Résumé",
-    "config_title": "Vérifier et compléter",
-    "field_title": "Titre",
-    "field_author": "Auteur(s)",
-    "field_publisher": "Éditeur",
-    "field_year": "Année",
-    "field_isbn": "ISBN",
-    "field_format": "Format",
-    "field_pages": "Pages",
-    "field_language": "Langue",
-    "field_series": "Série / Saga",
-    "field_volume": "Tome / Volume",
-    "reading_tracking": "Suivi de lecture",
-    "field_status": "Statut",
-    "field_rating": "Note (sur 5)",
-    "comments_hint": "(État du livre, édition spéciale, dédicace...)",
-    "btn_collection": "Ajouter à la Bibliothèque",
-    "cover_preview": "Aperçu de la couverture"
-  },
-  "edit_book": {
-    "title": "Modifier le livre"
-  },
-  "book_detail": {
-    "volume": "Tome",
-    "added_on": "Ajouté le",
-    "delete_warning": "Cette action est irréversible. Le livre sera retiré de votre collection."
-  },
-  "format": {
-    "paperback": "Broché",
-    "hardcover": "Relié",
-    "graphic_novel": "Roman Graphique",
-    "manga": "Manga",
-    "comic": "Comic"
-  },
-  "status": {
-    "to_read": "À lire",
-    "reading": "En cours de lecture",
-    "read": "Terminé",
-    "to_play": "À jouer",
-    "playing": "En cours",
-    "played": "Terminé"
   },
   "image_source": {
     "local": "Fichier local",
@@ -619,115 +517,5 @@
     "url_hint": "L'image sera prévisualisée automatiquement.",
     "url_label": "Lien direct vers l'image",
     "compress_alert": "L'image est trop lourde (max 5 Mo). Elle sera compressée."
-  },
-  "add_dvd": {
-    "title": "Ajouter un DVD / Série",
-    "desc": "Recherchez par titre, réalisateur ou scannez le code-barres.",
-    "search_placeholder": "Titre, Réalisateur ou Code-barres...",
-    "separator_or": "OU",
-    "btn_scan": "Scanner un Code-barres",
-    "results_title": "Résultats",
-    "no_results": "Aucun film ou série trouvé.",
-    "scan_init": "Initialisation...",
-    "scan_stop": "Arrêter le scan",
-    "scan_found": "Code trouvé !",
-    "scan_error": "Erreur de caméra",
-    "movie": "Film",
-    "tv_show": "Série"
-  },
-  "confirm_dvd": {
-    "title": "Confirmer l'ajout",
-    "desc": "Vérifiez les informations et complétez les détails de votre exemplaire physique.",
-    "config_title": "Vérifier et compléter",
-    "tv_show": "Série",
-    "movie": "Film",
-    "field_title": "Titre",
-    "field_director": "Réalisateur",
-    "field_studio": "Studio",
-    "field_year": "Année",
-    "field_duration": "Durée",
-    "field_format": "Format",
-    "field_barcode": "Code-barres",
-    "field_quantity": "Quantité",
-    "field_comments": "Notes / Commentaires",
-    "field_status": "Statut",
-    "field_rating": "Note (sur 5)",
-    "is_boxset": "C'est un coffret (Boxset)",
-    "watch_tracking": "Suivi de visionnage",
-    "status_to_watch": "À voir",
-    "status_watching": "En cours",
-    "status_watched": "Vu",
-    "replace_cover": "Remplacer la pochette principale",
-    "btn_collection": "Ajouter à la collection",
-    "btn_wishlist": "Ajouter à la Wishlist"
-  },
-  "edit_dvd": {
-    "title": "Modifier l'exemplaire"
-  },
-  "dvd_detail": {
-    "tech_specs": "Détails Techniques",
-    "delete_confirm": "Voulez-vous vraiment supprimer cet exemplaire de votre collection ?",
-    "boxset": "Coffret",
-    "movie": "Film",
-    "series": "Série",
-    "duration_label": "Durée",
-    "zone_label": "Zone / Région",
-    "barcode_label": "Code-barres"
-  },
-  "book": {
-    "source_hardcover": "Voir sur Hardcover",
-    "source_goodreads": "Voir sur GoodReads"
-  },
-  "add_game": {
-    "title": "Ajouter un Jeu Vidéo",
-    "desc": "Recherchez par titre ou scannez le code-barres.",
-    "search_placeholder": "Titre du jeu...",
-    "btn_scan": "Scanner un code-barres",
-    "results_title": "Résultats",
-    "no_results": "Aucun jeu trouvé.",
-    "scan_init": "Initialisation...",
-    "scan_stop": "Arrêter le scan",
-    "scan_found": "Code trouvé !",
-    "scan_error": "Erreur de caméra",
-    "barcode_warning": "Le scan peut ne pas fonctionner correctement pour le moment."
-  },
-  "confirm_game": {
-    "config_title": "Vérifier et compléter",
-    "field_title": "Titre",
-    "field_developer": "Développeur",
-    "field_publisher": "Éditeur",
-    "field_platform": "Plateforme",
-    "field_year": "Année",
-    "field_region": "Région / Version",
-    "region_placeholder": "Ex: JAP, PAL, NTSC-U...",
-    "field_format": "Édition",
-    "field_barcode": "Code-barres",
-    "field_quantity": "Quantité",
-    "field_comments": "Notes / Commentaires",
-    "field_status": "Statut",
-    "field_rating": "Note (sur 5)",
-    "play_tracking": "Suivi de jeu",
-    "status_to_play": "À jouer",
-    "status_playing": "En cours",
-    "status_played": "Terminé",
-    "replace_cover": "Remplacer la pochette principale",
-    "btn_collection": "Ajouter à la collection",
-    "btn_wishlist": "Ajouter à la Wishlist",
-    "cover_preview": "Aperçu de la couverture"
-  },
-  "edit_game": {
-    "title": "Modifier le jeu"
-  },
-  "game_detail": {
-    "tech_specs": "Détails Techniques",
-    "delete_confirm": "Voulez-vous vraiment supprimer ce jeu de votre collection ?",
-    "platform_label": "Plateforme",
-    "region_label": "Région",
-    "developer_label": "Développeur",
-    "publisher_label": "Éditeur",
-    "barcode_label": "Code-barres",
-    "view_igdb": "Voir sur IGDB",
-    "refresh_info_success": "Métadonnées actualisées avec succès !",
-    "refresh_info_error": "Erreur lors de l'actualisation des métadonnées."
   }
 }

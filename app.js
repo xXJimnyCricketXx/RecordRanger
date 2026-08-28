@@ -203,10 +203,12 @@ app.use((req, res) => {
 
 const connectDB = require('./config/db.js');
 const migrateDatabase = require('./utils/migrate.js');
+const { startScheduler } = require('./utils/backupScheduler.js');
 // Database connection and server start
 connectDB()
   .then(async () => {
     await migrateDatabase();
+    startScheduler();
     const port = process.env.VINYL_PORT || 3099;
     server.listen(port, () => {
         console.log(`🚀 Server started on port ${port}`);

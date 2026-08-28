@@ -184,18 +184,21 @@
                             <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
                                 <i class="fa-solid fa-folder-open mr-1"></i> <%= t('confirm_vinyl.sleeve_condition_label') %>
                             </label>
-                            <select name="sleeve_condition" class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all cursor-pointer">
-                                <option value="" class="bg-white dark:bg-[#1a1a1a]" <%= (!vinyl.sleeve_condition) ? 'selected' : '' %>><%= t('confirm_vinyl.sleeve_condition_placeholder') %></option>
-                                <option value="M" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'M') ? 'selected' : '' %>>Mint (M)</option>
-                                <option value="NM" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'NM') ? 'selected' : '' %>>Near Mint (NM)</option>
-                                <option value="VG+" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'VG+') ? 'selected' : '' %>>Very Good Plus (VG+)</option>
-                                <option value="VG" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'VG') ? 'selected' : '' %>>Very Good (VG)</option>
-                                <option value="G+" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'G+') ? 'selected' : '' %>>Good Plus (G+)</option>
-                                <option value="G" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'G') ? 'selected' : '' %>>Good (G)</option>
-                                <option value="F" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'F') ? 'selected' : '' %>>Fair (F)</option>
-                                <option value="P" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'P') ? 'selected' : '' %>>Poor (P)</option>
-                                <option value="Generic" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'Generic') ? 'selected' : '' %>><%= t('confirm_vinyl.sleeve_condition_generic') %></option>
-                            </select>
+                            <div class="relative group">
+                                <select name="sleeve_condition" class="select-theme w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg pl-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all cursor-pointer">
+                                    <option value="" class="bg-white dark:bg-[#1a1a1a]" <%= (!vinyl.sleeve_condition) ? 'selected' : '' %>><%= t('confirm_vinyl.sleeve_condition_placeholder') %></option>
+                                    <option value="M" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'M') ? 'selected' : '' %>>Mint (M)</option>
+                                    <option value="NM" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'NM') ? 'selected' : '' %>>Near Mint (NM)</option>
+                                    <option value="VG+" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'VG+') ? 'selected' : '' %>>Very Good Plus (VG+)</option>
+                                    <option value="VG" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'VG') ? 'selected' : '' %>>Very Good (VG)</option>
+                                    <option value="G+" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'G+') ? 'selected' : '' %>>Good Plus (G+)</option>
+                                    <option value="G" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'G') ? 'selected' : '' %>>Good (G)</option>
+                                    <option value="F" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'F') ? 'selected' : '' %>>Fair (F)</option>
+                                    <option value="P" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'P') ? 'selected' : '' %>>Poor (P)</option>
+                                    <option value="Generic" class="bg-white dark:bg-[#1a1a1a]" <%= (vinyl.sleeve_condition === 'Generic') ? 'selected' : '' %>><%= t('confirm_vinyl.sleeve_condition_generic') %></option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down text-[10px] opacity-20 group-hover:opacity-60 transition-all absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -219,6 +222,7 @@
 
                     <input type="hidden" name="media_type" value="vinyl">
                     <input type="hidden" name="in_wishlist" value="<%= vinyl.in_wishlist %>">
+
                     <input type="hidden" name="mongo_id" value="<%= vinyl._id %>">
                     
                     <button type="submit" class="w-full text-white bg-primary-theme hover:brightness-110 font-bold rounded-xl text-lg px-5 py-4 transition-transform hover:scale-[1.01] flex items-center justify-center gap-2 shadow-lg shadow-primary-theme/20">

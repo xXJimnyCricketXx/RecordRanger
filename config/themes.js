@@ -1,9 +1,37 @@
 const PRESETS = {
-    default: { 
-        label: 'Default (dark)',
+    ranger: {
+        label: 'RecordRanger!',
+        light: {
+            bg: '#e4e2dd',
+            card: '#ffffff',
+            navbar: '#ff89a9',
+            text: '#232323',
+            subtext: '#5c5d5d',
+            highlight: '#ff89a9',
+            highlightText: '#232323',
+            navText: '#232323',
+            accentText: '#232323'
+        },
+        dark: {
+            bg: '#171012',
+            card: '#282929',
+            navbar: '#ff89a9',
+            text: '#f1efe9',
+            subtext: '#c9b9bd',
+            highlight: '#ff89a9',
+            highlightText: '#232323',
+            navText: '#232323',
+            accentText: '#f1efe9',
+            footer: '#0f0a0b',
+            footerText: '#f1efe9'
+        }
+    },
+
+    default: {
+        label: 'Classic',
         light: {
             bg: '#f8fafc',
-            card: '#ffffff', 
+            card: '#ffffff',
             navbar: '#f1f5f9',
             text: '#0f172a',
             subtext: '#475569',
@@ -19,126 +47,26 @@ const PRESETS = {
         }
     },
 
-    emerald: { 
-        label: 'Emerald', 
-        light: { 
-            bg: '#f0fdf4',
-            card: '#ffffff', 
-            navbar: '#dcfce7',
-            text: '#064e3b',
-            subtext: '#166534',
-            highlight: '#059669' 
-        },
-        dark: { 
-            bg: '#022c22', 
-            card: '#064e3b', 
-            navbar: '#065f46', 
-            text: '#ecfdf5', 
-            subtext: '#ecfdf5', 
-            highlight: '#34d399' 
-        }
-    },
-    
-    pink: { 
-        label: 'Pink', 
-        light: { 
-            bg: '#fdf2f8',
-            card: '#ffffff', 
-            navbar: '#fce7f3',
-            text: '#500724',
-            subtext: '#9d174d',
-            highlight: '#db2777' 
-        },
-        dark: { 
-            bg: '#380620', 
-            card: '#831843', 
-            navbar: '#500724', 
-            text: '#fdf2f8', 
-            subtext: '#fdf2f8', 
-            highlight: '#f472b6' 
-        }
-    },
-    
-    blue: { 
-        label: 'Ocean', 
-        light: { 
+    blue: {
+        label: 'Ocean',
+        light: {
             bg: '#eff6ff',
-            card: '#ffffff', 
+            card: '#ffffff',
             navbar: '#dbeafe',
             text: '#172554',
             subtext: '#1e40af',
-            highlight: '#3b82f6' 
+            highlight: '#3b82f6'
         },
-        dark: { 
-            bg: '#0f172a', 
-            card: '#1e293b', 
-            navbar: '#172554', 
-            text: '#eff6ff', 
-            subtext: '#eff6ff', 
-            highlight: '#60a5fa' 
-        }
-    },
-    
-    amber: { 
-        label: 'Amber', 
-        light: { 
-            bg: '#fffbeb',
-            card: '#ffffff', 
-            navbar: '#fef3c7',
-            text: '#451a03',
-            subtext: '#92400e',
-            highlight: '#f59e0b' 
-        },
-        dark: { 
-            bg: '#2e1003', 
-            card: '#451a03', 
-            navbar: '#78350f', 
-            text: '#fffbeb', 
-            subtext: '#fffbeb', 
-            highlight: '#fbbf24' 
-        }
-    },
-    
-    purple: { 
-        label: 'Purple', 
-        light: { 
-            bg: '#faf5ff',
-            card: '#ffffff', 
-            navbar: '#f3e8ff',
-            text: '#2e1065',
-            subtext: '#6b21a8',
-            highlight: '#8b5cf6' 
-        },
-        dark: { 
-            bg: '#2e1065', 
-            card: '#4c1d95', 
-            navbar: '#5b21b6', 
-            text: '#f3e8ff', 
-            subtext: '#f3e8ff', 
-            highlight: '#a78bfa' 
+        dark: {
+            bg: '#0f172a',
+            card: '#1e293b',
+            navbar: '#172554',
+            text: '#eff6ff',
+            subtext: '#eff6ff',
+            highlight: '#60a5fa'
         }
     },
 
-    sakura: {
-        label: 'Sakura',
-        light: {
-            bg: '#fce8f3',
-            card: '#ffffff',
-            navbar: '#f5d0e8',
-            text: '#4a1a35',
-            subtext: '#8b4a6b',
-            highlight: '#d4679a'
-        },
-        dark: {
-            bg: '#a8527a',
-            card: '#be6a90',
-            navbar: '#963d6b',
-            text: '#fff0f8',
-            subtext: '#ffd6ed',
-            highlight: '#ffb3d9'
-        }
-    },
-    
     cyan: {
         label: 'Cyan',
         light: {
@@ -199,46 +127,6 @@ const PRESETS = {
         }
     },
 
-    sunset: {
-        label: 'Sunset',
-        light: {
-            bg: '#fff7ed',
-            card: '#ffffff',
-            navbar: '#ffedd5',
-            text: '#431407',
-            subtext: '#c2410c',
-            highlight: '#f97316'
-        },
-        dark: {
-            bg: '#2d0e04',
-            card: '#431407',
-            navbar: '#7c2d12',
-            text: '#fff7ed',
-            subtext: '#fff7ed',
-            highlight: '#fb923c'
-        }
-    },
-
-    indigo: {
-        label: 'Indigo',
-        light: {
-            bg: '#eef2ff',
-            card: '#ffffff',
-            navbar: '#e0e7ff',
-            text: '#1e1b4b',
-            subtext: '#3730a3',
-            highlight: '#6366f1'
-        },
-        dark: {
-            bg: '#1e1b4b',
-            card: '#312e81',
-            navbar: '#1e1b4b',
-            text: '#eef2ff',
-            subtext: '#eef2ff',
-            highlight: '#818cf8'
-        }
-    },
-
     midnight: {
         label: 'Midnight',
         light: {
@@ -276,34 +164,6 @@ const PRESETS = {
             text: '#fdf8f0',
             subtext: '#fdf8f0',
             highlight: '#d4aa6a'
-        }
-    },
-
-    ranger: {
-        label: 'RecordRanger',
-        light: {
-            bg: '#e4e2dd',
-            card: '#ffffff',
-            navbar: '#ff89a9',
-            text: '#232323',
-            subtext: '#5c5d5d',
-            highlight: '#ff89a9',
-            highlightText: '#232323',
-            navText: '#232323',
-            accentText: '#232323'
-        },
-        dark: {
-            bg: '#171012',
-            card: '#282929',
-            navbar: '#ff89a9',
-            text: '#f1efe9',
-            subtext: '#c9b9bd',
-            highlight: '#ff89a9',
-            highlightText: '#232323',
-            navText: '#232323',
-            accentText: '#f1efe9',
-            footer: '#0f0a0b',
-            footerText: '#f1efe9'
         }
     },
 };

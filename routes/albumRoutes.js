@@ -10,6 +10,68 @@ const { requireAuth, requireAdmin } = require('../middleware/authMiddleware'); /
 const User = require('../models/User');
 const { STANDARD_FORMAT_TERMS } = require('../config/constants');
 const { applyVisibilityFilter } = require('../utils/visibilityHelper');
+const { convertCurrency } = require('../utils/currencyHelper');
+
+// Gibt den Discogs-Token zurück – oder leeren String wenn nicht konfiguriert
+function discogsToken() {
+    const t = process.env.DISCOGS_TOKEN;
+    return (t && t !== 'YourDiscogsAPITokenHere') ? t : '';
+}
+// Hängt &token=... ans URL an, wenn ein Token gesetzt ist
+function discogsParam(token, first = false) {
+    return token ? `${first ? '?' : '&'}token=${token}` : (first ? '' : '');
+}
+// Baut Discogs-Header – mit oder ohne Authorization
+function discogsHeaders(token) {
+    const h = { 'User-Agent': 'RecordRangerApp/1.0' };
+    if (token) h['Authorization'] = `Discogs token=${token}`;
+    return h;
+}
+
+// Taktet ALLE ausgehenden Discogs-Requests auf max. 1/Sekunde (mit Token;
+// ohne Token großzügiger Sicherheitsabstand), egal von wo im Code sie
+// kommen. Verhindert Bursts von vornherein, statt erst nach einem 429 zu
+// reagieren – ein serialisierter Promise-Chain sorgt dafür, dass parallele
+// Aufrufe sich der Reihe nach anstellen statt gleichzeitig loszulaufen.
+let discogsQueue = Promise.resolve();
+let lastDiscogsCallAt = 0;
+
+function paceDiscogsCall(hasToken) {
+    const minInterval = hasToken ? 1000 : 2500;
+    const turn = discogsQueue.then(async () => {
+        const wait = Math.max(0, lastDiscogsCallAt + minInterval - Date.now());
+        if (wait > 0) await new Promise(r => setTimeout(r, wait));
+        lastDiscogsCallAt = Date.now();
+    });
+    discogsQueue = turn.catch(() => {});
+    return turn;
+}
+
+// Ruft eine Discogs-URL ab (getaktet über paceDiscogsCall) und behandelt
+// 429 (Rate Limit) zusätzlich mit einem Backoff-Retry anhand des
+// Retry-After-Headers (Fallback 15s) als Sicherheitsnetz. Gibt
+// { ok, status, json, rateLimited, retryAfter } zurück statt zu werfen,
+// damit Aufrufer Rate-Limits von "keine Daten" unterscheiden können.
+async function discogsFetch(url, headers, attempt = 0) {
+    await paceDiscogsCall(!!headers.Authorization);
+    const res = await fetch(url, { headers });
+
+    if (res.status === 429 && attempt === 0) {
+        const retryAfter = parseInt(res.headers.get('retry-after'), 10) || 15;
+        await new Promise(r => setTimeout(r, Math.min(retryAfter, 20) * 1000));
+        return discogsFetch(url, headers, attempt + 1);
+    }
+
+    if (res.status === 429) {
+        const retryAfter = parseInt(res.headers.get('retry-after'), 10) || 60;
+        return { ok: false, status: 429, rateLimited: true, retryAfter };
+    }
+
+    if (!res.ok) return { ok: false, status: res.status, rateLimited: false };
+
+    const json = await res.json();
+    return { ok: true, status: res.status, json, rateLimited: false };
+}
 
 async function getAdminId() {
     const admin = await User.findOne({ isAdmin: true }).select('_id');
@@ -57,19 +119,19 @@ router.get('/', requireAuth, async (req, res) => {
                 .reduce((acc, i) => acc + Number(i.quantity || 1), 0);
         };
 
+        const userCurrency = res.locals.user.currency || 'EUR';
         const totalValue = allItems.reduce((acc, i) => {
             const price = i.estimated_price && i.estimated_price.value;
             return price ? acc + (price * (i.quantity || 1)) : acc;
         }, 0);
-        const valueCurrency = allItems.find(i => i.estimated_price && i.estimated_price.currency)?.estimated_price?.currency || (res.locals.user.currency || 'USD');
         const valuedCount = allItems.filter(i => i.estimated_price && i.estimated_price.value).length;
 
         const stats = {
             total: allItems.reduce((acc, i) => acc + (i.quantity || 1), 0),
             vinyl: countByFormat(allItems, 'vinyl'),
             totalValue,
-            valueCurrency,
-            valuedCount,
+            valueCurrency: userCurrency,
+            valuedCount
         };
 
         const getTop = (items, field) => {
@@ -189,7 +251,7 @@ router.get('/stats', requireAuth, async (req, res) => {
 router.get('/collection', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
-        const { search, type, format, location, genre, style, artist, decade } = req.query;
+        const { search, type, format, location, genre, style, decade, noEstimate } = req.query;
         let sort = req.query.sort;
         if (sort) {
             res.cookie('sortPref', sort, { maxAge: 365 * 24 * 60 * 60 * 1000 });
@@ -228,21 +290,6 @@ router.get('/collection', requireAuth, async (req, res) => {
             conditions.push({ location: new RegExp(escapeRegExp(location), 'i') });
         }
 
-        if (artist) {
-            const artistRegex = new RegExp(escapeRegExp(artist), 'i');
-            conditions.push({
-                $or: [
-                    { artist: artistRegex },
-                    { artists: artistRegex },
-                    { author: artistRegex },
-                    { director: artistRegex },
-                    { developer: artistRegex },
-                    { label: artistRegex }
-                ]
-            });
-        }
-
-
         if (genre) {
             const genreArr = genre.split(',').map(g => g.trim()).filter(Boolean);
             if (genreArr.length > 0) {
@@ -279,6 +326,16 @@ router.get('/collection', requireAuth, async (req, res) => {
             }
         }
 
+
+        if (noEstimate === '1') {
+            conditions.push({
+                $or: [
+                    { 'estimated_price.value': null },
+                    { 'estimated_price.value': { $exists: false } },
+                    { 'estimated_price.value': 0 }
+                ]
+            });
+        }
 
         // Wrap conditions if filterMode is 'hide'
         const filterMode = req.query.filterMode || 'show';
@@ -317,17 +374,6 @@ router.get('/collection', requireAuth, async (req, res) => {
             .limit(limit)
             .lean();
 
-        // Build artist list for autocomplete
-        const artistList = await (async () => {
-            const baseQuery = {
-                owner: adminId,
-                in_wishlist: false,
-                $or: [{ kind: 'Music' }, { kind: { $exists: false } }],
-                artist: { $nin: ['', null] }
-            };
-            return (await Item.distinct('artist', baseQuery)).sort();
-        })();
-
         res.render('collection', {
             albums: albums.map(formatForView),
             totalItems,
@@ -339,12 +385,11 @@ router.get('/collection', requireAuth, async (req, res) => {
             queryLocation: location || '',
             queryGenre: genre || '',
             queryStyle: style || '',
-            queryArtist: artist || '',
             queryDecade: decade || '',
+            queryNoEstimate: noEstimate === '1',
             queryFilterMode: filterMode,
             currentSort: sort,
 
-            artistList,
             locations: await Item.distinct('location', { owner: adminId }),
             genres: await (async () => {
                 const typeQuery = { $or: [{ kind: 'Music' }, { kind: { $exists: false } }] };
@@ -425,7 +470,7 @@ router.post('/search-discogs', requireAuth, requireAdmin, async (req, res) => {
     const genre_filter = req.body.genre_filter;
     const label_filter = req.body.label_filter;
 
-    const token = process.env.DISCOGS_TOKEN;
+    const token = discogsToken();
 
     try {
         let searchUrls = [];
@@ -438,9 +483,9 @@ router.post('/search-discogs', requireAuth, requireAdmin, async (req, res) => {
             const itemId = urlMatch[2];
 
             if (itemType === 'master') {
-                searchUrls.push(`https://api.discogs.com/database/search?master_id=${itemId}&type=release&token=${token}`);
+                searchUrls.push(`https://api.discogs.com/database/search?master_id=${itemId}&type=release${discogsParam(token)}`);
             } else if (itemType === 'release') {
-                searchUrls.push(`https://api.discogs.com/releases/${itemId}?token=${token}`);
+                searchUrls.push(`https://api.discogs.com/releases/${itemId}${discogsParam(token, true)}`);
                 isDirectRelease = true;
             }
         } else {
@@ -450,7 +495,7 @@ router.post('/search-discogs', requireAuth, requireAdmin, async (req, res) => {
             if (genre_filter) advancedParams += `&genre=${encodeURIComponent(genre_filter)}`;
             if (label_filter) advancedParams += `&label=${encodeURIComponent(label_filter)}`;
 
-            searchUrls.push(`https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&format=${type}${advancedParams}&token=${token}`);
+            searchUrls.push(`https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&format=${type}${advancedParams}${discogsParam(token)}`);
         }
 
         const responses = await Promise.all(searchUrls.map(url => axios.get(url, { headers: { 'User-Agent': 'RecordRangerApp/1.0' } })));
@@ -521,10 +566,10 @@ router.post('/search-discogs', requireAuth, requireAdmin, async (req, res) => {
 router.get('/confirm-vinyl/:id', requireAuth, async (req, res) => {
     const discogsId = req.params.id;
     const searchTypeHint = req.query.type; // 'vinyl', 'cd', or 'cassette'
-    const token = process.env.DISCOGS_TOKEN;
+    const token = discogsToken();
 
     try {
-        const url = `https://api.discogs.com/releases/${discogsId}?token=${token}`;
+        const url = `https://api.discogs.com/releases/${discogsId}${discogsParam(token, true)}`;
         const response = await axios.get(url, { headers: { 'User-Agent': 'RecordRangerApp/1.0' } });
         const data = response.data;
 
@@ -633,6 +678,7 @@ router.post('/save-vinyl', requireAuth, requireAdmin, async (req, res) => {
 
         const parsedGenres = Array.isArray(genres) ? genres : (genres ? genres.split(',').map(g => g.trim()).filter(Boolean) : []);
         const parsedStyles = Array.isArray(styles) ? styles : (styles ? styles.split(',').map(s => s.trim()).filter(Boolean) : []);
+
 
         const adminId = req.user._id;
         const isWishlist = in_wishlist === 'true';
@@ -747,7 +793,7 @@ router.get('/api/collection/ids', requireAuth, async (req, res) => {
             owner: adminId,
             in_wishlist: false,
             $or: [{ kind: 'Music' }, { kind: { $exists: false } }]
-        }).select('discogs_id quantity').lean();
+        }).select('discogs_id quantity estimated_price').lean();
 
         console.log(`📦 Global estimate: ${albums.length} albums sent to front-end.`);
         res.json({ success: true, albums });
@@ -900,57 +946,97 @@ router.delete('/api/album/:id', requireAuth, requireAdmin, async (req, res) => {
 router.get('/api/estimate/:discogsId', requireAuth, async (req, res) => {
     try {
         const discogsId = req.params.discogsId;
-        const token = process.env.DISCOGS_TOKEN;
+        const token = discogsToken();
         const userCurrency = res.locals.user.currency || 'USD';
+        const headers = discogsHeaders(token);
+
+        const adminId = await getAdminId();
 
         const savePrice = async (priceObj, source) => {
             try {
-                await Item.updateOne(
-                    { discogs_id: parseInt(discogsId), owner: res.locals.user._id },
+                const numId = parseInt(discogsId);
+                const result = await Item.collection.updateOne(
+                    { discogs_id: { $in: [numId, String(numId)] }, owner: adminId },
                     { $set: {
                         'estimated_price.value':      priceObj.value,
                         'estimated_price.currency':   priceObj.currency || userCurrency,
                         'estimated_price.source':     source,
+                        'estimated_price.status':     'ok',
                         'estimated_price.updated_at': new Date()
-                    }},
-                    { strict: false }
+                    }}
                 );
-            } catch (e) { /* save failure is non-critical */ }
+                if (!result.matchedCount) {
+                    console.warn(`[Estimate] Kein Album gefunden: discogs_id=${discogsId}`);
+                }
+            } catch (e) {
+                console.error('[Estimate] savePrice Fehler:', e.message);
+            }
+        };
+
+        // Persists only the outcome status (rate_limited / no_data) without
+        // touching a previously stored value, so the UI can tell "never
+        // checked" apart from "checked, but Discogs throttled/had nothing".
+        const saveStatus = async (status) => {
+            try {
+                const numId = parseInt(discogsId);
+                await Item.collection.updateOne(
+                    { discogs_id: { $in: [numId, String(numId)] }, owner: adminId },
+                    { $set: { 'estimated_price.status': status } }
+                );
+            } catch (e) { /* non-critical */ }
+        };
+
+        // Converts a Discogs price object to the user's currency if needed.
+        // Falls back to the original currency if the FX lookup fails, so we
+        // never silently mislabel a value under the wrong currency.
+        const normalizeCurrency = async (priceObj) => {
+            if (!priceObj.currency || priceObj.currency === userCurrency) return priceObj;
+            const converted = await convertCurrency(priceObj.value, priceObj.currency, userCurrency);
+            if (converted === null) return priceObj;
+            return { value: converted, currency: userCurrency };
         };
 
         // PLAN A: Active marketplace prices
-        try {
-            const statsRes = await fetch(`https://api.discogs.com/marketplace/stats/${discogsId}?curr_abbr=${userCurrency}&token=${token}`, {
-                headers: { 'User-Agent': 'RecordRangerApp/1.0' }
-            });
+        const statsResult = await discogsFetch(
+            `https://api.discogs.com/marketplace/stats/${discogsId}?curr_abbr=${userCurrency}${discogsParam(token)}`,
+            headers
+        );
 
-            if (statsRes.ok) {
-                const statsData = await statsRes.json();
+        if (statsResult.rateLimited) {
+            await saveStatus('rate_limited');
+            return res.json({ success: false, error: 'rate_limited', retryAfter: statsResult.retryAfter });
+        }
 
-                // Verify there's a non-zero lowest price
-                if (statsData.lowest_price && statsData.lowest_price.value > 0) {
-                    await savePrice(statsData.lowest_price, 'market');
-                    return res.json({
-                        success: true,
-                        source: 'market',
-                        price: statsData.lowest_price,
-                        details: `${statsData.num_for_sale} for sale`
-                    });
-                }
+        if (statsResult.ok) {
+            const statsData = statsResult.json;
+            // Verify there's a non-zero lowest price
+            if (statsData.lowest_price && statsData.lowest_price.value > 0) {
+                const price = await normalizeCurrency(statsData.lowest_price);
+                await savePrice(price, 'market');
+                return res.json({
+                    success: true,
+                    source: 'market',
+                    price,
+                    details: `${statsData.num_for_sale} for sale`
+                });
             }
-        } catch (e) {
-            // console.log(`⚠️ Plan A failed for ${discogsId} (not for sale or error)`);
         }
 
         // PLAN B: Price suggestions / historical fallback
         // If we reach here, Plan A failed (no active sellers or error)
-        try {
-            const suggRes = await fetch(`https://api.discogs.com/marketplace/price_suggestions/${discogsId}?token=${token}`, {
-                headers: { 'User-Agent': 'RecordRangerApp/1.0' }
-            });
+        {
+            const suggResult = await discogsFetch(
+                `https://api.discogs.com/marketplace/price_suggestions/${discogsId}${discogsParam(token, true)}`,
+                headers
+            );
 
-            if (suggRes.ok) {
-                const suggData = await suggRes.json();
+            if (suggResult.rateLimited) {
+                await saveStatus('rate_limited');
+                return res.json({ success: false, error: 'rate_limited', retryAfter: suggResult.retryAfter });
+            }
+
+            if (suggResult.ok) {
+                const suggData = suggResult.json;
                 const keys = Object.keys(suggData);
 
                 const condition = (req.query.condition || '').toUpperCase();
@@ -994,22 +1080,21 @@ router.get('/api/estimate/:discogsId', requireAuth, async (req, res) => {
                     else if (targetKey.toLowerCase().includes('fair (f)')) gradeLabel = 'F';
                     else if (targetKey.toLowerCase().includes('poor (p)')) gradeLabel = 'P';
 
-                    await savePrice(bestPrice, 'history');
+                    const price = await normalizeCurrency(bestPrice);
+                    await savePrice(price, 'history');
                     return res.json({
                         success: true,
                         source: 'history',
-                        price: bestPrice,
+                        price,
                         details: `Based on historical data (${gradeLabel})`
                     });
                 }
             }
-        } catch (e) {
-            // console.log(`⚠️ Plan B failed for ${discogsId}`);
         }
 
-        // TOTAL FAILURE
-        // console.log(`❌ No price found for ${discogsId}`);
-        res.json({ success: false, error: "Unavailable" });
+        // TOTAL FAILURE — genuinely no data on Discogs (not a rate limit)
+        await saveStatus('no_data');
+        res.json({ success: false, error: "no_data" });
 
     } catch (err) {
         console.error("Estimation server error:", err);
@@ -1021,7 +1106,7 @@ router.get('/api/estimate/:discogsId', requireAuth, async (req, res) => {
 router.post('/import/discogs', requireAuth, async (req, res) => {
     const { discogsUrl, full, type } = req.body;
     const userId = req.user._id;
-    const token = process.env.DISCOGS_TOKEN;
+    const token = discogsToken();
 
     const usernameMatch = discogsUrl.match(/(?:user\/|user=)([^/?&]+)/);
     if (!usernameMatch) return res.status(400).json({ error: "Invalid Discogs URL" });
@@ -1044,7 +1129,7 @@ router.post('/import/discogs', requireAuth, async (req, res) => {
         while (hasMore) {
             const response = await axios.get(apiUrl, {
                 params: { page, per_page: 50 },
-                headers: { 'Authorization': `Discogs token=${token}`, 'User-Agent': 'RecordRangerApp/1.0' }
+                headers: discogsHeaders(token)
             });
 
             const listItems = response.data[listKey];
@@ -1063,7 +1148,7 @@ router.post('/import/discogs', requireAuth, async (req, res) => {
                         try {
                             console.log(`🔄 Updating tracklist for existing album ID ${info.id}`);
                             const detailRes = await axios.get(`https://api.discogs.com/releases/${info.id}`, {
-                                headers: { 'Authorization': `Discogs token=${token}`, 'User-Agent': 'RecordRangerApp/1.0' }
+                                headers: discogsHeaders(token)
                             });
                             const fetchedTracklist = detailRes.data.tracklist || [];
 
@@ -1089,7 +1174,7 @@ router.post('/import/discogs', requireAuth, async (req, res) => {
                 if (full === true) {
                     try {
                         const detailRes = await axios.get(`https://api.discogs.com/releases/${info.id}`, {
-                            headers: { 'Authorization': `Discogs token=${token}`, 'User-Agent': 'RecordRangerApp/1.0' }
+                            headers: discogsHeaders(token)
                         });
                         tracklist = detailRes.data.tracklist || [];
                         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1401,7 +1486,7 @@ function parseCSV(text) {
 router.post('/api/album/:id/import-tracklist', requireAuth, requireAdmin, async (req, res) => {
     const { discogsId } = req.body;
     const albumId = req.params.id;
-    const token = process.env.DISCOGS_TOKEN;
+    const token = discogsToken();
 
     if (!discogsId) {
         return res.status(400).json({ success: false, error: "ID Discogs missing" });
@@ -1409,7 +1494,7 @@ router.post('/api/album/:id/import-tracklist', requireAuth, requireAdmin, async 
 
     try {
         const response = await axios.get(`https://api.discogs.com/releases/${discogsId}`, {
-            headers: { 'User-Agent': 'RecordRangerApp/1.0', 'Authorization': `Discogs token=${token}` }
+            headers: discogsHeaders(token)
         });
 
         const tracklist = response.data.tracklist;
@@ -1431,7 +1516,7 @@ router.post('/api/album/:id/import-tracklist', requireAuth, requireAdmin, async 
 router.post('/api/album/:id/refresh-info', requireAuth, requireAdmin, async (req, res) => {
     const albumId = req.params.id;
     const { discogsId } = req.body;
-    const token = process.env.DISCOGS_TOKEN;
+    const token = discogsToken();
 
     if (!discogsId) {
         return res.status(400).json({ success: false, error: "Discogs ID missing" });
@@ -1439,7 +1524,7 @@ router.post('/api/album/:id/refresh-info', requireAuth, requireAdmin, async (req
 
     try {
         const response = await axios.get(`https://api.discogs.com/releases/${discogsId}`, {
-            headers: { 'Authorization': `Discogs token=${token}`, 'User-Agent': 'RecordRangerApp/1.0' }
+            headers: discogsHeaders(token)
         });
         const data = response.data;
 
@@ -1478,3 +1563,6 @@ router.post('/api/album/:id/refresh-info', requireAuth, requireAdmin, async (req
 });
 
 module.exports = router;
+
+
+
