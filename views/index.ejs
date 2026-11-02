@@ -103,7 +103,7 @@
                         <div class="p-3 md:p-4">
                             <h3 class="font-bold truncate text-sm md:text-base leading-tight"><%= album.title %></h3>
                             <p class="text-xs opacity-60 truncate mb-1">
-                                <%= album.artist || 'Inconnu' %>
+                                <%= album.artist || t('common.unknown') %>
                             </p>
 
                             <div class="flex items-center gap-1 h-4">
@@ -132,7 +132,7 @@
             const widgetConfig = {
                 'total': { label: t('stats.total_label'), val: stats.total, unit: t('common.items'), icon: 'fa-database', color: 'bg-primary-theme' },
                 'vinyl': { label: t('media.vinyls'), val: stats.vinyl, icon: 'fa-record-vinyl', color: 'bg-primary-theme' },
-                'value': { label: t('stats.value_label'), val: stats.totalValue > 0 ? new Intl.NumberFormat(currentLng === 'de' ? 'de-DE' : 'en-US', { style: 'currency', currency: stats.valueCurrency, maximumFractionDigits: 0 }).format(stats.totalValue) : '—', unit: stats.valuedCount > 0 && stats.valuedCount < stats.total ? `(${stats.valuedCount}/${stats.total})` : null, icon: 'fa-sack-dollar', color: 'bg-primary-theme' },
+                'value': { label: t('stats.value_label'), val: stats.totalValue > 0 ? new Intl.NumberFormat(localeTag, { style: 'currency', currency: stats.valueCurrency, maximumFractionDigits: 0 }).format(stats.totalValue) : '—', unit: stats.valuedCount > 0 && stats.valuedCount < stats.total ? `(${stats.valuedCount}/${stats.total})` : null, icon: 'fa-sack-dollar', color: 'bg-primary-theme' },
             };
 
             const topConfigs = {

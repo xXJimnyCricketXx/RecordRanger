@@ -42,7 +42,7 @@ router.post('/', async (req, res) => {
             email,
             password: password, 
             isAdmin: true,
-            language: language || req.language || 'fr',
+            language: language || req.language || 'en',
             lastChange: new Date()
         });
 

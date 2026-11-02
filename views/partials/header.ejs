@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <% 
   const isDark = (typeof locals.isDark !== 'undefined') ? locals.isDark : true;
-  const currentLng = (typeof locals.currentLng !== 'undefined') ? locals.currentLng : 'fr';
+  const currentLng = (typeof locals.currentLng !== 'undefined') ? locals.currentLng : 'en';
   const THEMES = (typeof locals.allThemes !== 'undefined') ? locals.allThemes : {};
 
   let activePresetKey = 'ranger';
@@ -230,7 +230,7 @@
 
             navLinks.forEach(item => { %>
                 <li>
-                  <a href="<%= baseUrl + item.url %>" <%= item.newTab ? 'target="_blank"' : '' %> class="block py-2 px-3 md:p-0 text-[var(--nav-text)] hover:text-primary-theme transition-colors">
+                  <a href="<%= baseUrl + item.url %>" <%- item.newTab ? 'target="_blank"' : '' %> class="block py-2 px-3 md:p-0 text-[var(--nav-text)] hover:text-primary-theme transition-colors">
                     <%= item.label %>
                   </a>
                 </li>

@@ -100,18 +100,34 @@ async function loadAdminData() {
   return { users, blockedIps, logs, allGenres, visibilitySettings, backups, backupSettings, collectionCount, wishlistCount };
 }
 
+// Messages that can be shown through ?msg=, and whether they report a problem.
+const ADMIN_MESSAGES = {
+  user_deleted: false,
+  ip_blocked: false,
+  ip_unblocked: false,
+  saved: false,
+  backup_schedule_saved: false,
+  batch_barcode_success: false,
+  delete_self_error: true,
+  user_create_error: true,
+  error: true,
+};
+
 // DASHBOARD (GET)
 router.get("/", requireAuth, requireAdmin, async (req, res) => {
   try {
     const data = await loadAdminData();
 
-    // Read optional message key from query and translate in the view.
     const msgKey = req.query.msg;
+    const knownMessage = Object.hasOwn(ADMIN_MESSAGES, msgKey);
 
     res.render("admin", {
       ...data,
       user: res.locals.user,
-      successMessage: msgKey ? req.t(`messages.${msgKey}`) : null,
+      successMessage: knownMessage
+        ? req.t(`messages.${msgKey}`, { count: parseInt(req.query.count) || 0 })
+        : null,
+      messageIsError: knownMessage && ADMIN_MESSAGES[msgKey],
       newPassword: null,
     });
   } catch (err) {
@@ -132,6 +148,7 @@ router.post("/add-user", requireAuth, requireAdmin, async (req, res) => {
       username,
       email,
       password: password,
+      language: res.locals.user.language,
       lastChange: new Date(),
     });
 
@@ -146,12 +163,15 @@ router.post("/add-user", requireAuth, requireAdmin, async (req, res) => {
     res.render("admin", {
       ...data,
       user: res.locals.user,
-      successMessage: `Utilisateur ${username} créé !`,
+      successMessage: req.t("messages.user_created_success", {
+        name: username,
+        interpolation: { escapeValue: false },
+      }),
       newPassword: password,
     });
   } catch (err) {
     console.error("Creation error:", err);
-    res.redirect("/admin?msg=user_created");
+    res.redirect("/admin?msg=user_create_error");
   }
 });
 
@@ -178,6 +198,7 @@ router.post("/reset-password", requireAuth, requireAdmin, async (req, res) => {
         user: res.locals.user,
         successMessage: req.t("messages.password_reset_success", {
           name: userToUpdate.username,
+          interpolation: { escapeValue: false },
         }),
         newPassword: password,
       });
@@ -262,7 +283,7 @@ router.post(
       res.redirect("/admin/personnalisation?msg=saved");
     } catch (err) {
       console.error("[ERR] perso save", err);
-      res.status(500).send("[ERR] perso save failed.");
+      res.status(500).send(req.t("errors.generic_server_error"));
     }
   },
 );
@@ -302,7 +323,7 @@ router.post("/visibility/save", requireAuth, requireAdmin, async (req, res) => {
     res.redirect("/admin?msg=saved");
   } catch (err) {
     console.error("[ERR] visibility save", err);
-    res.status(500).send("[ERR] visibility save failed.");
+    res.status(500).send(req.t("errors.generic_server_error"));
   }
 });
 

@@ -10,6 +10,7 @@ const { requireAuth, requireAdmin } = require('../middleware/authMiddleware'); /
 const User = require('../models/User');
 const { STANDARD_FORMAT_TERMS } = require('../config/constants');
 const { applyVisibilityFilter } = require('../utils/visibilityHelper');
+const mongoose = require('mongoose');
 const { convertCurrency, createValueConverter } = require('../utils/currencyHelper');
 
 // Gibt den Discogs-Token zurück – oder leeren String wenn nicht konfiguriert
@@ -94,13 +95,27 @@ async function getAdminId() {
     return admin ? admin._id : null;
 }
 
+const textParam = (value) => (typeof value === 'string' ? value : '');
+
+const PAGE_SIZES = [25, 50, 100];
+const SORT_OPTIONS = {
+    added_desc: { added_at: -1 },
+    added_asc: { added_at: 1 },
+    title_asc: { title: 1 },
+    title_desc: { title: -1 },
+    year_desc: { year: -1 },
+    year_asc: { year: 1 },
+    artist_asc: { artist: 1 },
+    artist_desc: { artist: -1 }
+};
+
 const formatForView = (item) => {
     if (!item) return null;
     const obj = item.toObject ? item.toObject() : item;
 
     return {
         ...obj,
-        artist: obj.artist || obj.creator || obj.author || obj.director || 'Inconnu',
+        artist: obj.artist || obj.creator || obj.author || obj.director || 'Unknown',
         media_type: obj.media_type || obj.format || 'other',
         cover_image: obj.cover_image || obj.coverUrl || '/ressources/logo.png',
         tracklist: obj.tracklist || [],
@@ -260,7 +275,7 @@ router.get('/stats', requireAuth, async (req, res) => {
             totalVinyls, totalValue, currency,
             genres, conditions, years,
             mostValuable, recentAdditions,
-            printDate: new Date().toLocaleDateString(res.locals.currentLng === 'de' ? 'de-DE' : 'en-US')
+            printDate: new Date().toLocaleDateString(res.locals.localeTag)
         });
     } catch (err) {
         console.error(err);
@@ -271,23 +286,30 @@ router.get('/stats', requireAuth, async (req, res) => {
 router.get('/collection', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
-        const { search, type, format, location, genre, style, decade, noEstimate } = req.query;
+        const { type, noEstimate } = req.query;
+        const search = textParam(req.query.search);
+        const format = textParam(req.query.format);
+        const location = textParam(req.query.location);
+        const genre = textParam(req.query.genre);
+        const style = textParam(req.query.style);
+        const decade = textParam(req.query.decade);
         const visibleQuery = (extra = {}) => {
             const q = { owner: adminId, ...extra };
             applyVisibilityFilter(q, res.locals.isAdmin, res.locals.settings);
             return q;
         };
         let sort = req.query.sort;
-        if (sort) {
+        if (Object.hasOwn(SORT_OPTIONS, sort)) {
             res.cookie('sortPref', sort, { maxAge: 365 * 24 * 60 * 60 * 1000 });
         } else {
-            sort = req.cookies.sortPref || 'added_desc';
+            sort = Object.hasOwn(SORT_OPTIONS, req.cookies.sortPref) ? req.cookies.sortPref : 'added_desc';
         }
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 25;
+        const page = Math.max(parseInt(req.query.page) || 1, 1);
+        const limit = PAGE_SIZES.includes(parseInt(req.query.limit)) ? parseInt(req.query.limit) : PAGE_SIZES[0];
 
         let query = { owner: adminId, in_wishlist: false };
         let conditions = [];
+        const musicOnly = { $or: [{ kind: 'Music' }, { kind: { $exists: false } }] };
 
         if (search) {
             const regex = new RegExp(escapeRegExp(search), 'i');
@@ -295,11 +317,6 @@ router.get('/collection', requireAuth, async (req, res) => {
                 $or: [{ title: regex }, { artist: regex }, { author: regex }, { director: regex }, { barcode: regex }]
             });
         }
-
-
-        conditions.push({
-            $or: [{ kind: 'Music' }, { kind: { $exists: false } }]
-        });
 
 
         if (format && format !== 'all') {
@@ -362,39 +379,20 @@ router.get('/collection', requireAuth, async (req, res) => {
             });
         }
 
-        // Wrap conditions if filterMode is 'hide'
-        const filterMode = req.query.filterMode || 'show';
+        // 'hide' excludes what the filters match; without filters there is nothing to exclude
+        const filterMode = req.query.filterMode === 'hide' ? 'hide' : 'show';
         if (filterMode === 'hide' && conditions.length > 0) {
-            query.$and = [{ $nor: [{ $and: conditions }] }];
-        } else if (conditions.length > 0) {
-            query.$and = conditions;
+            query.$and = [musicOnly, { $nor: [{ $and: conditions }] }];
+        } else {
+            query.$and = [musicOnly, ...conditions];
         }
 
         applyVisibilityFilter(query, res.locals.isAdmin, res.locals.settings);
 
         const totalItems = await Item.countDocuments(query);
 
-        // Build dynamic sort object
-        const buildSortObj = () => {
-            const sortMap = {
-                'added_desc': { added_at: -1 },
-                'added_asc': { added_at: 1 },
-                'title_asc': { title: 1 },
-                'title_desc': { title: -1 },
-                'year_desc': { year: -1 },
-                'year_asc': { year: 1 },
-            };
-
-            if (sort && sort.startsWith('artist')) {
-                const dir = sort === 'artist_asc' ? 1 : -1;
-                return { artist: dir };
-            }
-
-            return sortMap[sort] || { added_at: -1 };
-        };
-
         const albums = await Item.find(query)
-            .sort(buildSortObj())
+            .sort(SORT_OPTIONS[sort])
             .skip((page - 1) * limit)
             .limit(limit)
             .lean();
@@ -444,7 +442,7 @@ router.get('/collection', requireAuth, async (req, res) => {
 router.get('/add-vinyl', requireAuth, requireAdmin, (req, res) => {
     const validTypes = ['vinyl'];
     const searchType = validTypes.includes(req.query.type) ? req.query.type : 'vinyl';
-    const searchQuery = req.query.search || '';
+    const searchQuery = textParam(req.query.search);
     res.render('add-vinyl', { searchType, searchQuery, currentType: 'add-vinyl' });
 });
 
@@ -464,6 +462,7 @@ router.get('/add-vinyl/manual', requireAuth, requireAdmin, async (req, res) => {
 // route for editing an existing album
 router.get('/album/edit/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).render('404');
         const album = await Item.findById(req.params.id);
         if (!album) {
             return res.redirect('/collection?type=music');
@@ -890,7 +889,7 @@ router.get('/print/collection', requireAuth, async (req, res) => {
         res.render('print', {
             albums: items.map(formatForView),
             title: req.t('collection.title'),
-            printDate: new Date().toLocaleDateString(res.locals.currentLng === 'de' ? 'de-DE' : 'en-US')
+            printDate: new Date().toLocaleDateString(res.locals.localeTag)
         });
     } catch (err) {
         res.status(500).send(req.t('errors.generic_server_error'));
@@ -908,7 +907,7 @@ router.get('/print/wishlist', requireAuth, async (req, res) => {
         res.render('print', {
             albums: items.map(formatForView),
             title: req.t('wishlist.title'),
-            printDate: new Date().toLocaleDateString(res.locals.currentLng === 'de' ? 'de-DE' : 'en-US')
+            printDate: new Date().toLocaleDateString(res.locals.localeTag)
         });
     } catch (err) {
         res.status(500).send(req.t('errors.generic_server_error'));
@@ -939,6 +938,7 @@ router.get('/wishlist', requireAuth, async (req, res) => {
 // collection item detail
 router.get('/album/:id', requireAuth, async (req, res) => {
     try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).render('404');
         const query = { _id: req.params.id };
         applyVisibilityFilter(query, res.locals.isAdmin, res.locals.settings);
         const album = await Item.findOne(query);

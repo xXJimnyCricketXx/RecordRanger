@@ -2,6 +2,8 @@ const Settings = require('../models/Settings');
 const themesConfig = require('../config/themes');
 const { BASE_URL } = require('../config/constants');
 
+const LOCALE_TAGS = { en: 'en-US', de: 'de-DE', fr: 'fr-FR', es: 'es-ES', it: 'it-IT' };
+
 module.exports = async (req, res, next) => {
     try {
         res.locals.allThemes = themesConfig;
@@ -19,7 +21,8 @@ module.exports = async (req, res, next) => {
 
         res.locals.settings = settings;
 
-        res.locals.currentLng = res.locals.user?.language || req.language || 'fr';
+        res.locals.currentLng = res.locals.user?.language || req.language || 'en';
+        res.locals.localeTag = LOCALE_TAGS[res.locals.currentLng] || 'en-US';
         res.locals.isDark = res.locals.user ? (res.locals.user.theme === 'dark') : true;
 
         const fullPath = req.path.toLowerCase();
@@ -43,7 +46,8 @@ module.exports = async (req, res, next) => {
     } catch (err) {
         console.error("[ERR] SettingsMiddleware:", err);
         res.locals.isDark = true;
-        res.locals.currentLng = 'fr';
+        res.locals.currentLng = 'en';
+        res.locals.localeTag = 'en-US';
         res.locals.settings = { theme: { preset: 'ranger' } };
         next();
     }

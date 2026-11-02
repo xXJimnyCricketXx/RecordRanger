@@ -13,7 +13,7 @@ and market prices from Discogs. Your data stays on your own server.
 
 <p>
   <img src="https://img.shields.io/badge/Status-Beta-FF89A9?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/Version-1.1.0-FF89A9?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.1.1-FF89A9?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Docker-Ready-FF89A9?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/Unraid-Template-FF89A9?style=for-the-badge&logo=unraid&logoColor=white" alt="Unraid">
   <img src="https://img.shields.io/badge/License-MIT-FF89A9?style=for-the-badge" alt="License">
@@ -199,7 +199,7 @@ RecordRanger/
 
 | **Version** | **Features** | **Status** |
 | :---: | :--- | :---: |
-| **Next** | <ul><li>Cleanup of remaining untranslated texts</li><li>Clearer admin messages</li></ul> | <img src="https://img.shields.io/badge/Planned-6E7681?style=for-the-badge" alt="Planned"> |
+| **1.1.1** | <ul><li>All pages, dialogs and print views follow your language, dates and numbers too</li><li>Admin actions show a clear success or error message</li><li>English is the default language for new users</li><li>Inverted collection filter no longer hides everything without an active filter</li><li>Invalid links show a proper page instead of an error</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
 | **1.1.0** | <ul><li>Runs on Node.js 24, with major dependency upgrades</li><li>Refuses to start with an example login secret</li><li>Login throttling per client, which spoofed headers cannot bypass</li><li>IP blocking only trusts proxy headers behind a configured proxy</li><li>Live updates are limited to admins</li><li>Automated tests run before every image build</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
 | **1.0.2** | <ul><li>Duplicates are always detected, and a new entry never overwrites an existing one</li><li>Backup restore validates the file first, keeps a snapshot and rolls back on failure</li><li>The app starts and recovers on its own when the database is unavailable</li><li>Scheduled backups run reliably and catch up after downtime</li><li>Collection value converts between currencies correctly</li><li>Login right after first-run setup works</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
 | **1.0.1** | <ul><li>First-run setup is locked once an admin exists</li><li>Avatar uploads only accept real image files</li><li>Fixed cross-site scripting issues in the admin panel, statistics and duplicate check</li><li>Hidden records and genres stay hidden on every page</li><li>Estimating, importing and editing are admin-only</li><li>Stricter input validation and updated dependencies</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |

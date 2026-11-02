@@ -24,11 +24,11 @@
         <input type="hidden" name="user_image" value="">
         <input type="hidden" name="in_wishlist" id="inWishlistInput" value="false">
 
-        <!-- Grunddaten -->
+        <!-- Basic data -->
         <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
             <h2 class="text-sm font-black uppercase tracking-widest opacity-60 mb-6 flex items-center gap-2">
                 <i class="fa-solid fa-circle-info text-primary-theme"></i>
-                Grunddaten
+                <%= t('ui.basics') %>
             </h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -38,7 +38,7 @@
                         <%= t('confirm_vinyl.field_title') %> <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="title" required
-                        placeholder="Titel des Albums"
+                        placeholder="<%= t('ui.placeholder_title') %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -47,7 +47,7 @@
                         <%= t('confirm_vinyl.field_artist') %> <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="artist" required
-                        placeholder="Interpret / Band"
+                        placeholder="<%= t('ui.placeholder_artist') %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -65,7 +65,7 @@
                         <%= t('confirm_vinyl.country') %>
                     </label>
                     <input type="text" name="country"
-                        placeholder="z.B. Germany, UK, US"
+                        placeholder="<%= t('ui.placeholder_country') %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -74,7 +74,7 @@
                         <%= t('confirm_vinyl.label_label') %>
                     </label>
                     <input type="text" name="label"
-                        placeholder="z.B. Columbia, EMI"
+                        placeholder="<%= t('ui.placeholder_label') %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -92,7 +92,7 @@
                         <%= t('confirm_vinyl.field_genres') %>
                     </label>
                     <input type="text" name="genres"
-                        placeholder="Rock, Pop, Jazz (kommagetrennt)"
+                        placeholder="<%= t('ui.placeholder_genres') %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -101,7 +101,7 @@
                         <%= t('confirm_vinyl.field_styles') %>
                     </label>
                     <input type="text" name="styles"
-                        placeholder="Prog Rock, Krautrock (kommagetrennt)"
+                        placeholder="<%= t('ui.placeholder_styles') %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -121,13 +121,13 @@
                 </div>
                 <div class="flex-grow">
                     <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
-                        URL des Cover-Bilds
+                        <%= t('ui.cover_url') %>
                     </label>
                     <input type="url" id="coverUrlField"
                         placeholder="https://..."
                         oninput="updateCover(this.value)"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
-                    <p class="text-xs opacity-50 mt-2">Optional – URL eines Bildes aus dem Internet.</p>
+                    <p class="text-xs opacity-50 mt-2"><%= t('ui.cover_url_hint') %></p>
                 </div>
             </div>
         </div>
@@ -152,10 +152,10 @@
 
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
-                        Pressung / Format
+                        <%= t('ui.pressing_format') %>
                     </label>
                     <input type="text" name="format_type"
-                        placeholder="z.B. Gatefold, Limited Edition"
+                        placeholder="<%= t('ui.placeholder_pressing') %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -211,10 +211,10 @@
 
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
-                        Discogs-ID <span class="opacity-50 font-normal normal-case text-xs ml-2">– optional, für spätere Metadaten-Anreicherung</span>
+                        Discogs-ID <span class="opacity-50 font-normal normal-case text-xs ml-2"><%= t('ui.discogs_id_hint') %></span>
                     </label>
                     <input type="text" name="discogs_id"
-                        placeholder="z.B. 870138"
+                        placeholder="870138"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 

@@ -97,7 +97,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vinyl.barcode_label') %> (ISBN)</label>
-                            <input type="text" name="barcode" value="<%= vinyl.barcode %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme focus:border-primary-theme block w-full p-3 transition-colors outline-none font-mono" placeholder="Code-barres...">
+                            <input type="text" name="barcode" value="<%= vinyl.barcode %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme focus:border-primary-theme block w-full p-3 transition-colors outline-none font-mono" placeholder="<%= t('ui.placeholder_barcode') %>">
                         </div>
                         <div>
                             <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vinyl.field_quantity') %></label>

@@ -362,12 +362,87 @@ test('all main pages render and their scripts parse', async () => {
     }
 });
 
+// --- Admin messages, languages and links
+
+test('admin messages are shown, and only known ones', async () => {
+    const page = async (query) => (await request(`/admin?${query}`, { cookie: admin })).text();
+    assert.match(await page('msg=user_deleted'), /role="status"[^>]*>[\s\S]*?User deleted\./);
+    assert.match(await page('msg=delete_self_error'), /role="status" class="bg-red-500[\s\S]*?cannot delete your own account/);
+    assert.match(await page('msg=batch_barcode_success&count=7'), /7 barcodes updated/);
+    assert.doesNotMatch(await page('msg=__proto__'), /role="status"/);
+    assert.doesNotMatch(await page('msg=made_up'), /role="status"/);
+});
+
+test('a failed user creation says so', async () => {
+    const response = await request('/admin/add-user', { cookie: admin, form: { username: 'owner', email: OWNER.email } });
+    assert.equal(response.headers.get('location'), '/admin?msg=user_create_error');
+});
+
+test('a new user message keeps special characters readable', async () => {
+    const html = await (await request('/admin/add-user', { cookie: admin, form: { username: "O'Neil", email: 'oneil@example.test' } })).text();
+    assert.ok(html.includes('User O&#39;Neil has been created!'), html.match(/has been created[^<]*/)?.[0]);
+    assert.ok(!html.includes('créé'));
+    await users.deleteOne({ email: 'oneil@example.test' });
+});
+
+test('every language has the same translation keys', () => {
+    const keys = (value, prefix = '') => Object.entries(value).flatMap(([k, v]) =>
+        (v && typeof v === 'object' ? keys(v, `${prefix}${k}.`) : [`${prefix}${k}`]));
+    const english = keys(require('../locales/en.json')).sort();
+    for (const lng of ['de', 'fr', 'es', 'it']) {
+        assert.deepEqual(keys(require(`../locales/${lng}.json`)).sort(), english, lng);
+    }
+});
+
+test('pages follow the language of the user', async () => {
+    const pages = ['/collection', '/wishlist', '/add-vinyl/manual', '/print/collection', '/stats', '/settings', '/admin'];
+    const german = /Nicht geschätzt|Drucken|Einträge|Grunddaten|Bereits vorhanden|Menge \+1|Stand:/;
+    for (const url of pages) {
+        assert.doesNotMatch(await (await request(url, { cookie: admin })).text(), german, url);
+    }
+
+    await users.updateOne({ _id: ownerId }, { $set: { language: 'de' } });
+    const manual = await (await request('/add-vinyl/manual', { cookie: admin })).text();
+    assert.ok(manual.includes('Grunddaten') && manual.includes('Bereits vorhanden') && manual.includes('Menge +1'));
+    const stats = await (await request('/stats', { cookie: admin })).text();
+    assert.ok(stats.includes('Drucken / Als PDF speichern'));
+    assert.deepEqual(inlineScriptErrors(manual), []);
+    await users.updateOne({ _id: ownerId }, { $set: { language: 'en' } });
+});
+
+test('users without a language setting get English', async () => {
+    const response = await request('/login', { headers: { 'accept-language': 'xx' } });
+    assert.match(await response.text(), /<html[^>]*lang="en"|Log ?in|Sign ?in|Email/i);
+});
+
+test('the collection copes with odd links', async () => {
+    for (const query of ['page=-5', 'page=abc', 'limit=-1', 'limit=999999', 'sort=__proto__', 'search[$ne]=x', 'genre[a]=b', 'decade[a]=1', 'style[]=x', 'location[$gt]=', 'filterMode=whatever']) {
+        const response = await request(`/collection?${query}`, { cookie: admin });
+        assert.equal(response.status, 200, query);
+    }
+    const cookie = `${admin}; sortPref=__proto__`;
+    assert.equal((await request('/collection', { cookie })).status, 200);
+    assert.equal((await request('/album/not-an-id', { cookie: admin })).status, 404);
+    assert.equal((await request('/album/edit/not-an-id', { cookie: admin })).status, 404);
+});
+
+test('the inverted filter excludes matches and needs a filter to do so', async () => {
+    const titles = async (query) => (await request(`/collection?${query}`, { cookie: admin })).text();
+    const plain = await titles('limit=100');
+    assert.ok(plain.includes('Public Album'));
+
+    assert.ok((await titles('limit=100&filterMode=hide')).includes('Public Album'), 'no filter hides nothing');
+    const inverted = await titles('limit=100&filterMode=hide&search=Public%20Album');
+    assert.ok(!inverted.includes('>Public Album<') && inverted.includes('Blue Album'));
+    assert.ok((await titles('search=Public%20Album')).includes('Public Album'));
+});
+
 // --- Collection value
 
 test('the total converts currencies and leaves out what it cannot convert', async () => {
     const total = async () => {
         const text = await (await request('/stats', { cookie: admin })).text();
-        return text.match(/([\d.,]+)\s*€/)[1];
+        return text.match(/€\s*([\d.,]+)/)[1];
     };
     await insertRecord({ title: 'Ten', artist: 'Cur', estimated_price: { value: 10, currency: 'EUR' } });
     await insertRecord({ title: 'Five', artist: 'Cur', quantity: 2, estimated_price: { value: 5, currency: 'EUR' } });

@@ -31,7 +31,6 @@ const i18nMiddleware = require('i18next-http-middleware');
 
 const clientIp = require('./utils/clientIp');
 const settingsMiddleware = require('./middleware/settingsMiddleware');
-const themesConfig = require('./config/themes');
 const { BASE_URL } = require('./config/constants');
 
 // Models
@@ -61,7 +60,7 @@ const io = new Server(server, {
 i18next
   .use(i18nMiddleware.LanguageDetector) // Detect language via query/cookie/header
   .init({
-    fallbackLng: 'fr',
+    fallbackLng: 'en',
     preload: ['fr', 'en', 'es', 'it', 'de'],
     resources: {
       en: { translation: require('./locales/en.json') },
@@ -160,12 +159,6 @@ app.use(async (req, res, next) => {
 });
 
 
-// Inject IO object into requests
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
-
 // Security: IP blocking middleware
 app.use(async (req, res, next) => {
   const ip = clientIp(req);
@@ -204,12 +197,6 @@ app.use(async (req, res, next) => {
     
     next();
 });
-
-app.use((req, res, next) => {
-    res.locals.allThemes = themesConfig; 
-    next();
-});
-
 
 // Dynamic manifest.json endpoint - injects BASE_URL
 app.get(BASE_URL + '/manifest.json', (req, res) => {
@@ -273,9 +260,3 @@ connectWithRetry()
     startScheduler();
   })
   .catch((err) => console.error('[ERR] Startup:', err));
-
-
-// Socket event
-// io.on('connection', (socket) => {
-//   console.log('Connected socket :', socket.id);
-// });

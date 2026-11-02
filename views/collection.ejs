@@ -53,9 +53,9 @@
 
                         <a href="<%= baseUrl %>/print/collection" target="_blank"
                             class="flex-shrink-0 w-10 h-10 md:w-auto md:px-4 card-theme hover:text-primary-theme hover:border-primary-theme rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 group"
-                            title="Drucken / Als PDF speichern">
+                            title="<%= t('ui.print_pdf') %>">
                             <i class="fa-solid fa-print group-hover:scale-110 transition-transform"></i>
-                            <span class="hidden md:inline text-xs font-bold uppercase tracking-widest">Drucken</span>
+                            <span class="hidden md:inline text-xs font-bold uppercase tracking-widest"><%= t('ui.print') %></span>
                         </a>
                     </div>
                 <% } %>
@@ -220,10 +220,10 @@
                         </div>
 
                 <button onclick="toggleNoEstimate()"
-                    title="Nur Alben ohne Schätzung anzeigen"
+                    title="<%= t('ui.not_estimated_hint') %>"
                     class="w-full lg:w-auto h-10 px-3 flex items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-all whitespace-nowrap <%= locals.queryNoEstimate ? 'bg-primary-theme text-[#232323] border-primary-theme' : 'card-theme hover:border-primary-theme hover:text-primary-theme' %>">
                     <i class="fa-solid fa-circle-question text-xs"></i>
-                    Nicht geschätzt
+                    <%= t('ui.not_estimated') %>
                 </button>
 
                 <!-- Forced onto its own row (w-full) so it always sits below the filter fields above, right-aligned -->
@@ -308,7 +308,7 @@
                     activePills.push({ key: 'style', label: t('collection.styles_filter') + ': ' + locals.queryStyle.split(',').join(', ') });
                 }
                 if (locals.queryNoEstimate) {
-                    activePills.push({ key: 'noEstimate', label: 'Nicht geschätzt' });
+                    activePills.push({ key: 'noEstimate', label: t('ui.not_estimated') });
                 }
             %>
 
@@ -354,7 +354,7 @@
                                     <%= album.title %>
                                 </h3>
                                 <p class="text-xs opacity-60 truncate mb-2">
-                                    <%= album.artist || 'Inconnu' %>
+                                    <%= album.artist || t('common.unknown') %>
                                 </p>
 
                                 <% if(album.format_type || album.variant_color) { 
@@ -786,7 +786,7 @@
 
                 socket.once('import_finished', () => window.location.reload());
                 socket.once('import_error', (data) => {
-                    alert("Erreur : " + data.message);
+                    alert(<%- safeJson(t('ui.error')) %> + ": " + data.message);
                     icon.classList.remove('fa-spin');
                     btn.disabled = false;
                 });
@@ -816,7 +816,7 @@
         const countSpan = document.getElementById('estimateCount');
         const percentSpan = document.getElementById('estimatePercent');
         const estimateErrorMsg = "<%= t('messages.estimate_error') %>";
-        const currentLocale = '<%= currentLng === "fr" ? "fr-FR" : "en-US" %>';
+        const currentLocale = '<%= localeTag %>';
         const currentCurrency = '<%= user.currency || "USD" %>';
 
         let totalAlbums = 0;
@@ -897,7 +897,7 @@
 
                 if (data.error === 'rate_limited' && !isRetry) {
                     const wait = Math.min(data.retryAfter || 60, 90);
-                    if (statusSpan) statusSpan.innerText = `Discogs Rate-Limit erreicht, warte ${wait}s...`;
+                    if (statusSpan) statusSpan.innerText = <%- safeJson(t('ui.rate_limit_wait')) %>.replace('%s', wait);
                     await new Promise(r => setTimeout(r, wait * 1000));
                     if (statusSpan) statusSpan.innerText = '';
                     await estimateOneAlbum(id, quantity, statusSpan, true);

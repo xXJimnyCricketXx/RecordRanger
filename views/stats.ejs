@@ -100,7 +100,7 @@
 
     <div class="no-print">
         <button onclick="window.print()" class="btn-print">
-            🖨️ Drucken / Als PDF speichern
+            🖨️ <%= t('ui.print_pdf') %>
         </button>
     </div>
 
@@ -116,7 +116,7 @@
             <div class="text-center">
                 <div class="stat-number" style="color:<%= highlightColor %>">
                     <%= totalValue > 0
-                        ? new Intl.NumberFormat('de-DE', { style: 'currency', currency, maximumFractionDigits: 0 }).format(totalValue)
+                        ? new Intl.NumberFormat(localeTag, { style: 'currency', currency, maximumFractionDigits: 0 }).format(totalValue)
                         : 'N/A' %>
                 </div>
                 <div class="stat-label"><%= t('stats.total_value') || 'Total Value' %></div>
@@ -146,7 +146,7 @@
                             <p style="font-size:.75rem; opacity:.5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><%= album.artist %></p>
                         </div>
                         <span style="font-size:.85rem; font-weight:900; flex-shrink:0; color:<%= highlightColor %>;">
-                            <%= new Intl.NumberFormat('de-DE', { style: 'currency', currency, maximumFractionDigits: 2 }).format(album.estimated_price.value * (album.quantity || 1)) %>
+                            <%= new Intl.NumberFormat(localeTag, { style: 'currency', currency, maximumFractionDigits: 2 }).format(album.estimated_price.value * (album.quantity || 1)) %>
                         </span>
                     </div>
                 <% }) %>
@@ -163,7 +163,7 @@
                         <p style="font-size:.75rem; opacity:.5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><%= album.artist %></p>
                     </div>
                     <span style="font-size:.75rem; opacity:.4; flex-shrink:0;">
-                        <%= album.added_at ? new Date(album.added_at).toLocaleDateString('de-DE') : '' %>
+                        <%= album.added_at ? new Date(album.added_at).toLocaleDateString(localeTag) : '' %>
                     </span>
                 </div>
             <% }) %>
@@ -183,7 +183,7 @@
     </div>
 
     <div style="text-align:center; font-size:.7rem; opacity:.3; padding-bottom:1rem;">
-        RecordRanger! · Stand: <%= printDate %>
+        RecordRanger! · <%= t('ui.as_of', { date: printDate }) %>
     </div>
 
 </div>

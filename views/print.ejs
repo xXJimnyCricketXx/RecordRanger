@@ -167,18 +167,18 @@
 
     <div class="no-print">
         <button onclick="window.close()" class="btn btn-back">
-            ✕ Tab schließen
+            ✕ <%= t('ui.close_tab') %>
         </button>
         <button onclick="window.print()" class="btn btn-print">
-            🖨️ Drucken / Als PDF speichern
+            🖨️ <%= t('ui.print_pdf') %>
         </button>
     </div>
 
     <div class="print-header">
         <h1>RECORD<span>Ranger!</span> – <%= title %></h1>
         <div class="meta">
-            <div><%= albums.length %> Einträge</div>
-            <div>Stand: <%= printDate %></div>
+            <div><%= t('ui.entries', { count: albums.length }) %></div>
+            <div><%= t('ui.as_of', { date: printDate }) %></div>
         </div>
     </div>
 
@@ -199,7 +199,7 @@
         <tbody>
             <% albums.forEach((album, i) => {
                 const price = album.estimated_price && album.estimated_price.value
-                    ? new Intl.NumberFormat('de-DE', {
+                    ? new Intl.NumberFormat(localeTag, {
                         style: 'currency',
                         currency: album.estimated_price.currency || 'EUR',
                         maximumFractionDigits: 2
