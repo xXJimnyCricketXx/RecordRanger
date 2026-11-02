@@ -13,7 +13,7 @@ and market prices from Discogs. Your data stays on your own server.
 
 <p>
   <img src="https://img.shields.io/badge/Status-Beta-FF89A9?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/Version-1.0.2-FF89A9?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.1.0-FF89A9?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Docker-Ready-FF89A9?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/Unraid-Template-FF89A9?style=for-the-badge&logo=unraid&logoColor=white" alt="Unraid">
   <img src="https://img.shields.io/badge/License-MIT-FF89A9?style=for-the-badge" alt="License">
@@ -108,7 +108,7 @@ records and genres they get to see.
 ```bash
 git clone https://github.com/xXJimnyCricketXx/RecordRanger.git
 cd RecordRanger
-cp .env.example .env    # set PASSJWT and SESSION_SECRET
+cp .env.example .env    # set PASSJWT
 docker compose up -d
 ```
 
@@ -145,7 +145,7 @@ RecordRanger needs a MongoDB instance, so install a MongoDB container first and 
 curl -fsSL -o /boot/config/plugins/dockerMan/templates-user/recordranger.xml https://raw.githubusercontent.com/xXJimnyCricketXx/RecordRanger/main/unraid-template/recordranger.xml
 ```
 
-**2. Create the container.** Go to *Docker → Add Container → Template: recordranger*, then set the MongoDB URL, `PASSJWT` and `SESSION_SECRET`.
+**2. Create the container.** Go to *Docker → Add Container → Template: recordranger*, then set the MongoDB URL and `PASSJWT`.
 
 Port `18002` and the appdata paths under `/mnt/user/appdata/recordranger` are pre-filled.
 
@@ -161,14 +161,13 @@ Configuration is handled through environment variables. See [`.env.example`](.en
 | --- | :---: | --- |
 | `MONGODB_URL` | ✅ | Connection string for your MongoDB instance |
 | `PASSJWT` | ✅ | Long random secret used to sign login tokens |
-| `SESSION_SECRET` | ✅ | Long random secret used for sessions |
-| `PROD` | ❌ | Set to `true` **only** if you serve the app over HTTPS through a reverse proxy, otherwise `false` |
+| `PROD` | ❌ | Set to `true` **only** if you serve the app over HTTPS through a reverse proxy, otherwise `false`. Client IP addresses are only read from the proxy headers when this is `true` |
 | `VINYL_PORT` | ❌ | Port the app listens on inside the container (default: `3099`) |
 | `BASE_URL` | ❌ | Base path for serving on a sub-path, leave empty to serve from root |
 | `DISCOGS_TOKEN` | ❌ | Discogs token for higher rate limits and condition-based price suggestions. See [API configuration](docs/api-keys.md) |
 
 > [!IMPORTANT]
-> Replace the example values of `PASSJWT` and `SESSION_SECRET` with your own random secrets.
+> Set `PASSJWT` to your own random secret, for example the output of `openssl rand -hex 32`. The app refuses to start with the example value.
 > The barcode scanner needs HTTPS, because browsers only allow camera access on secure pages.
 
 <br/><br/>
@@ -200,7 +199,8 @@ RecordRanger/
 
 | **Version** | **Features** | **Status** |
 | :---: | :--- | :---: |
-| **Next** | <ul><li>Further security hardening</li><li>Major dependency upgrades and automated tests</li><li>Cleanup of remaining untranslated texts</li></ul> | <img src="https://img.shields.io/badge/Planned-6E7681?style=for-the-badge" alt="Planned"> |
+| **Next** | <ul><li>Cleanup of remaining untranslated texts</li><li>Clearer admin messages</li></ul> | <img src="https://img.shields.io/badge/Planned-6E7681?style=for-the-badge" alt="Planned"> |
+| **1.1.0** | <ul><li>Runs on Node.js 24, with major dependency upgrades</li><li>Refuses to start with an example login secret</li><li>Login throttling per client, which spoofed headers cannot bypass</li><li>IP blocking only trusts proxy headers behind a configured proxy</li><li>Live updates are limited to admins</li><li>Automated tests run before every image build</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
 | **1.0.2** | <ul><li>Duplicates are always detected, and a new entry never overwrites an existing one</li><li>Backup restore validates the file first, keeps a snapshot and rolls back on failure</li><li>The app starts and recovers on its own when the database is unavailable</li><li>Scheduled backups run reliably and catch up after downtime</li><li>Collection value converts between currencies correctly</li><li>Login right after first-run setup works</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
 | **1.0.1** | <ul><li>First-run setup is locked once an admin exists</li><li>Avatar uploads only accept real image files</li><li>Fixed cross-site scripting issues in the admin panel, statistics and duplicate check</li><li>Hidden records and genres stay hidden on every page</li><li>Estimating, importing and editing are admin-only</li><li>Stricter input validation and updated dependencies</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
 | **1.0.0** | <ul><li>Discogs search, barcode scanner and manual entry</li><li>Discogs and Musik-Sammler import</li><li>Value estimates with currency conversion</li><li>Statistics, duplicate check, print and PDF export</li><li>Scheduled backups, color themes, five languages</li><li>Docker image and Unraid template</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
@@ -211,14 +211,20 @@ See the [open issues](../../issues) for planned features and known problems.
 
 ## <img src="https://api.iconify.design/lucide/code-2.svg?color=%23FF89A9" width="20"> Development
 
-Requires Node.js 20 or newer and a running MongoDB. Set `MONGODB_URL` in `.env` to your local instance, then run:
+Requires Node.js 24 or newer and a running MongoDB. Set `MONGODB_URL` in `.env` to your local instance, then run:
 
 ```bash
 npm install
 npm run dev
 ```
 
-The app reloads on changes. There are no automated tests yet.
+The app reloads on changes.
+
+The tests need a MongoDB on `localhost:27017` and only use a database named `recordranger_test`, which they wipe. Set `TEST_MONGODB_URL` to use another instance.
+
+```bash
+npm test
+```
 
 <br/><br/>
 

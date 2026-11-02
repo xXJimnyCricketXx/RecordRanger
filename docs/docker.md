@@ -54,7 +54,6 @@ services:
       - BASE_URL=
       - PROD=false
       - PASSJWT=<something>
-      - SESSION_SECRET=<something>
       - DISCOGS_TOKEN=<something>
     ports:
       - '<external_port>:80'

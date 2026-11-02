@@ -9,12 +9,35 @@ const User = require("../models/User");
 const jwt = require('jsonwebtoken');
 const LoginLog = require("../models/LoginLog");
 const geoip = require('geoip-lite');
-const requestIp = require('request-ip');
+const clientIp = require('../utils/clientIp');
 
-// In-memory login attempt tracking to throttle brute-force attempts.
-const loginAttempts = {};
+// In-memory tracking of failed logins to throttle brute-force attempts. Counting
+// per IP and email keeps an attacker from locking the owner out from elsewhere;
+// the higher limit per IP stops trying many addresses from one place.
+const loginFailures = new Map(); // key -> { count, resetAt }
 const MAX_ATTEMPTS = 4;
+const MAX_ATTEMPTS_PER_IP = 20;
 const BLOCK_TIME = 5 * 60 * 1000; // 5 minutes (can be adjusted as needed)
+const MAX_EMAIL_LENGTH = 254;
+
+const secondsBlocked = (key, limit, now) => {
+  const entry = loginFailures.get(key);
+  if (!entry || entry.count < limit || entry.resetAt <= now) return 0;
+  return Math.ceil((entry.resetAt - now) / 1000);
+};
+
+const recordFailure = (key, now) => {
+  const previous = loginFailures.get(key);
+  const count = previous && previous.resetAt > now ? previous.count + 1 : 1;
+  loginFailures.set(key, { count, resetAt: now + BLOCK_TIME });
+  return count;
+};
+
+const pruneFailures = (now) => {
+  for (const [key, entry] of loginFailures) {
+    if (entry.resetAt <= now) loginFailures.delete(key);
+  }
+};
 
 /**
  * Translate known errors into i18n keys returned to the client.
@@ -58,13 +81,19 @@ module.exports.login_post = async (req, res) => {
   const { email, password } = req.body;
   const now = Date.now();
 
-  if (typeof email !== 'string' || typeof password !== 'string') {
+  if (typeof email !== 'string' || typeof password !== 'string' || email.length > MAX_EMAIL_LENGTH) {
     return res.status(400).json({ errors: { login: req.t('errors.invalid_credentials') } });
   }
 
-  // Check whether this email is temporarily blocked due to repeated failures.
-  if (loginAttempts[email] && loginAttempts[email].blockedUntil && now < loginAttempts[email].blockedUntil) {
-    const secondsLeft = Math.ceil((loginAttempts[email].blockedUntil - now) / 1000);
+  const ip = clientIp(req);
+  const attemptKey = `${ip}|${email.toLowerCase()}`;
+
+  // Check whether this client is temporarily blocked due to repeated failures.
+  const secondsLeft = Math.max(
+    secondsBlocked(attemptKey, MAX_ATTEMPTS, now),
+    secondsBlocked(ip, MAX_ATTEMPTS_PER_IP, now)
+  );
+  if (secondsLeft > 0) {
     return res.status(429).json({
       errors: { login: req.t('errors.too_many_attempts_timed', { seconds: secondsLeft }) }
     });
@@ -73,14 +102,13 @@ module.exports.login_post = async (req, res) => {
   try {
     const user = await User.login(email, password);
 
-    const clientIp = requestIp.getClientIp(req);
-    const geo = geoip.lookup(clientIp) || {};
+    const geo = geoip.lookup(ip) || {};
 
     await LoginLog.create({
       user: user._id,
       username: user.username,
       email: user.email,
-      ip: clientIp,
+      ip,
       country: geo.country || 'XX',
       city: geo.city || req.t('common.unknown'),
       userAgent: req.headers['user-agent'],
@@ -88,7 +116,7 @@ module.exports.login_post = async (req, res) => {
     });
 
     // Clear failed attempts on successful login.
-    if (loginAttempts[email]) delete loginAttempts[email];
+    loginFailures.delete(attemptKey);
 
     const token = jwt.sign({ id: user._id }, process.env.PASSJWT, { expiresIn: '3d' });
 
@@ -101,14 +129,15 @@ module.exports.login_post = async (req, res) => {
     res.status(200).json({ user: user._id });
 
   } catch (err) {
-    // Increment failure counter for this email address.
-    if (!loginAttempts[email]) loginAttempts[email] = { count: 0, lastTry: now };
-    loginAttempts[email].count++;
-    loginAttempts[email].lastTry = now;
+    // Only wrong credentials count: a database outage must not lock anyone out.
+    if (err.message !== 'incorrect email' && err.message !== 'incorrect password') throw err;
 
-    // If threshold reached, set a temporary block window.
-    if (loginAttempts[email].count >= MAX_ATTEMPTS) {
-      loginAttempts[email].blockedUntil = now + BLOCK_TIME;
+    pruneFailures(now);
+    const failures = recordFailure(attemptKey, now);
+    const ipFailures = recordFailure(ip, now);
+
+    // If a threshold is reached, the block window starts now.
+    if (failures >= MAX_ATTEMPTS || ipFailures >= MAX_ATTEMPTS_PER_IP) {
       return res.status(429).json({
         errors: { login: req.t('errors.too_many_attempts_blocked') }
       });

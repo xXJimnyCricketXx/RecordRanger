@@ -15,7 +15,7 @@ const migrateDatabase = require('./migrate');
  * configured retention count.
  */
 
-const BACKUP_DIR = path.join(__dirname, '..', 'backups');
+const BACKUP_DIR = process.env.BACKUP_DIR || path.join(__dirname, '..', 'backups');
 const FILENAME_RE = /^recordranger_backup_[\d-]+T[\d-]+\.json$/;
 
 function ensureDir() {

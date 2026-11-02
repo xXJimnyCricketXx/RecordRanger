@@ -9,10 +9,18 @@
  * production use.
  */
 require('dotenv').config();
+
+// A publicly known signing secret would let anyone forge an admin login
+const EXAMPLE_SECRETS = ['SomeComplexPassword', 'ChangeThisToAComplexPassword'];
+if (!process.env.PASSJWT || EXAMPLE_SECRETS.includes(process.env.PASSJWT)) {
+  console.error('❌ PASSJWT is missing or still the example value. Set it to a long random secret, e.g. the output of: openssl rand -hex 32');
+  process.exit(1);
+}
+
 const express = require('express');
-const session = require('express-session');
+const jwt = require('jsonwebtoken');
 const path = require('path');
-const { checkUser } = require('./middleware/authMiddleware.js');
+const { checkUser, isTokenCurrent } = require('./middleware/authMiddleware.js');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const http = require('http');
@@ -21,6 +29,7 @@ const { Server } = require("socket.io");
 const i18next = require('i18next');
 const i18nMiddleware = require('i18next-http-middleware');
 
+const clientIp = require('./utils/clientIp');
 const settingsMiddleware = require('./middleware/settingsMiddleware');
 const themesConfig = require('./config/themes');
 const { BASE_URL } = require('./config/constants');
@@ -73,6 +82,19 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('io', io); // Expose io to routes
 
+// Sockets only carry admin progress events, so only admins may connect
+io.engine.use(cookieParser());
+io.use(async (socket, next) => {
+  try {
+    const decodedToken = jwt.verify(socket.request.cookies.jwt, process.env.PASSJWT);
+    const user = await User.findById(decodedToken.id);
+    if (user && user.isAdmin === true && isTokenCurrent(user, decodedToken)) return next();
+  } catch (err) {
+    // Handled below like any other rejected connection
+  }
+  next(new Error('unauthorized'));
+});
+
 // Global middlewares
 // Avatars are user uploads: never serve anything but images from there
 app.use(BASE_URL + '/uploads/avatars', (req, res, next) => {
@@ -88,13 +110,6 @@ app.use(cookieParser());
 
 app.use(i18nMiddleware.handle(i18next));
 
-
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: process.env.PROD === 'true', httpOnly: true },
-}));
 
 if (process.env.PROD === 'true') {
   app.set('trust proxy', 1); // Trust first proxy
@@ -153,9 +168,9 @@ app.use((req, res, next) => {
 
 // Security: IP blocking middleware
 app.use(async (req, res, next) => {
-  const clientIP = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  const ip = clientIp(req);
   try {
-    const blocked = await BlockedIP.findOne({ ip: clientIP });
+    const blocked = await BlockedIP.findOne({ ip: { $in: [ip, `::ffff:${ip}`] } });
     if (blocked) return res.status(403).send(req.t('common.forbidden'));
     next();
   } catch (err) {

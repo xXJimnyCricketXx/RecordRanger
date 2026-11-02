@@ -2,3 +2,15 @@ node_modules
 .git
 .env
 mongo_data
+backups
+public/uploads/avatars/*
+tests
+docs
+.github
+.vscode
+unraid-template
+*.archive
+*.log
+*.md
+ca_profile.xml
+docker-compose*.yml
