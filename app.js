@@ -69,6 +69,12 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('io', io); // Expose io to routes
 
 // Global middlewares
+// Avatars are user uploads: never serve anything but images from there
+app.use(BASE_URL + '/uploads/avatars', (req, res, next) => {
+  if (!/\.(jpe?g|png|gif|webp)$/i.test(req.path)) return res.status(404).end();
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+});
 app.use(BASE_URL, express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -116,6 +122,8 @@ app.use(async (req, res, next) => {
 
   // Make translation helper and current language available to all EJS views
   res.locals.t = req.t;
+  // JSON for inline <script> blocks: "<" must not be able to close the script tag
+  res.locals.safeJson = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
   res.locals.currentLng = req.language;
   res.locals.appVersion = pkg.version;
   res.locals.baseUrl = BASE_URL;

@@ -109,6 +109,10 @@
 </section>
 
 <script>
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
     let hiddenItemsArr = JSON.parse(document.getElementById('hiddenItemsInput').value || '[]');
     
     const getFormatLabel = (item) => {
@@ -143,10 +147,10 @@
                     div.className = `p-3 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer ${isAlreadyHidden ? 'opacity-50 pointer-events-none' : ''}`;
                     div.innerHTML = `
                         <div class="flex items-center gap-3 overflow-hidden">
-                            <img src="${item.cover_image || '/ressources/logo.png'}" class="w-8 h-8 rounded-md object-cover bg-black/10 dark:bg-white/10">
+                            <img src="${escapeHtml(item.cover_image || '/ressources/logo.png')}" class="w-8 h-8 rounded-md object-cover bg-black/10 dark:bg-white/10">
                             <div class="overflow-hidden">
-                                <div class="text-xs font-bold truncate">${item.title}</div>
-                                <div class="text-[10px] opacity-60 truncate">${item.artist || item.author || item.director || ''}${getFormatLabel(item)}</div>
+                                <div class="text-xs font-bold truncate">${escapeHtml(item.title)}</div>
+                                <div class="text-[10px] opacity-60 truncate">${escapeHtml(item.artist || item.author || item.director || '')}${escapeHtml(getFormatLabel(item))}</div>
                             </div>
                         </div>
                         ${isAlreadyHidden ? '<i class="fa-solid fa-check text-green-500"></i>' : '<i class="fa-solid fa-plus text-primary-theme"></i>'}
@@ -191,11 +195,11 @@
         div.innerHTML = `
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-md bg-black/10 dark:bg-white/10 overflow-hidden flex-shrink-0">
-                    <img src="${item.cover_image || '/ressources/logo.png'}" class="w-full h-full object-cover">
+                    <img src="${escapeHtml(item.cover_image || '/ressources/logo.png')}" class="w-full h-full object-cover">
                 </div>
                 <div class="overflow-hidden">
-                    <div class="text-xs font-bold truncate">${item.title}</div>
-                    <div class="text-[10px] opacity-50 truncate">${item.artist || item.author || item.director || ''}${getFormatLabel(item)}</div>
+                    <div class="text-xs font-bold truncate">${escapeHtml(item.title)}</div>
+                    <div class="text-[10px] opacity-50 truncate">${escapeHtml(item.artist || item.author || item.director || '')}${escapeHtml(getFormatLabel(item))}</div>
                 </div>
             </div>
             <button type="button" class="text-red-500 opacity-50 hover:opacity-100 p-2 rounded-lg" onclick="removeHiddenItem('${item._id}')">

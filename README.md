@@ -1,93 +1,251 @@
-<p align="center">
-  <img src="./docs/img/banner.png" alt="RecordRanger banner" width="100%">
+<div align="center">
+
+<img src="docs/img/banner.png" alt="RecordRanger!" width="100%">
+
+<br/><br/>
+
+# RecordRanger!
+
+### A self-hosted collection manager for vinyl records
+
+Keep track of your records, your wishlist and what your collection is worth, with metadata
+and market prices from Discogs. Your data stays on your own server.
+
+<p>
+  <img src="https://img.shields.io/badge/Status-Beta-FF89A9?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/Version-1.0.1-FF89A9?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Docker-Ready-FF89A9?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/Unraid-Template-FF89A9?style=for-the-badge&logo=unraid&logoColor=white" alt="Unraid">
+  <img src="https://img.shields.io/badge/License-MIT-FF89A9?style=for-the-badge" alt="License">
 </p>
 
-<p align="center">
-  A modern, self-hostable collection manager for vinyl record enthusiasts.
-</p>
+**[Overview](#-overview)** ·
+**[Features](#-features)** ·
+**[Screenshots](#-screenshots)** ·
+**[Getting Started](#-getting-started)** ·
+**[Unraid](#-unraid)** ·
+**[Configuration](#-configuration)** ·
+**[Roadmap](#-roadmap)**
 
-<p align="center">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
-  <img src="https://img.shields.io/badge/Self--Hosted-Yes-green.svg" alt="Self-hosted">
-  <img src="https://img.shields.io/badge/Docker-Ready-blue.svg" alt="Docker ready">
-  <a href="https://github.com/xXJimnyCricketXx/RecordRanger/actions/workflows/docker-publish.yml">
-    <img src="https://github.com/xXJimnyCricketXx/RecordRanger/actions/workflows/docker-publish.yml/badge.svg" alt="Build status">
-  </a>
-</p>
+</div>
 
-## Overview
+<br/><br/>
 
-RecordRanger allows you to keep track of your vinyl record collection. It uses the Discogs API to retrieve metadata, tracklists, and market valuations for your collection, providing a convenient and fully customizable dashboard for your home server.
+## <img src="https://api.iconify.design/lucide/book-open.svg?color=%23FF89A9" width="20"> Overview
 
-## Contents
+**RecordRanger!** manages a vinyl collection on your home server. Add a record by searching
+Discogs, scanning its barcode or typing it in by hand, and RecordRanger stores the tracklist,
+pressing details and shelf location together with an estimated market value.
 
-- [Features](#features)
-- [Quick Start (Docker Compose)](#quick-start-docker-compose)
-- [Unraid](#unraid)
-- [Configuration](#configuration)
-- [Tech Stack](#tech-stack)
-- [Documentation](#documentation)
-- [License](#license)
+One admin maintains the collection. Other accounts can browse it, and the admin decides which
+records and genres they get to see.
 
-## Features
+<br/>
 
-- **Smart Import** — Add records by searching Discogs, scanning a barcode, or entering them manually; import your entire existing Discogs collection or wishlist in one click.
-- **Duplicate Detection** — Flags matching entries when adding a record you may already own, letting you bump the quantity instead of creating a duplicate.
-- **Advanced Organization** — Track the physical shelf location of every record, and optionally distinguish specific formats like SACD and CDr.
-- **Market Insights** — Real-time value estimates (Low/Median/High) based on Discogs market data, converted into your preferred currency.
-- **Statistics** — Dedicated statistics page (genre distribution, sleeve condition, value trends, top valuable records, and more) plus modular dashboard widgets.
-- **Wishlist** — Keep track of future finds and move them into your collection once received.
-- **Print / PDF Export** — Export your collection or wishlist as a printable list.
-- **Secure Access** — Authentication with IP blocking, plus visibility controls to hide specific records, genres, or types from guests.
-- **Backups** — Manual and scheduled automatic database backups, with restore support.
-- **Color Themes** — Several built-in visual themes, including light and dark mode.
-- **Multilingual** — Fully localized in English 🇬🇧, French 🇫🇷, German 🇩🇪, Spanish 🇪🇸 and Italian 🇮🇹.
+> [!WARNING]
+> RecordRanger is meant for your home network. Security hardening is in progress, so please
+> don't expose it directly to the internet for now.
 
-## Quick Start (Docker Compose)
+> [!NOTE]
+> This is a private project and is **not affiliated with Discogs**. Value estimates are based
+> on Discogs marketplace data and are only a guide.
+
+<br/><br/>
+
+## <img src="https://api.iconify.design/lucide/sparkles.svg?color=%23FF89A9" width="20"> Features
+
+- **Adding records** – Search Discogs, paste a Discogs link, scan a barcode or enter a record manually.
+- **Importing** – Bring in your Discogs collection or wishlist, or a CSV export from Musik-Sammler.
+- **Duplicate check** – Warns when a record may already be in your collection and lets you raise the quantity instead.
+- **Organization** – Shelf location, sleeve condition, quantity, comments, your own photos, and filters for genre, style and decade.
+- **Value estimates** – Lowest marketplace price from Discogs, or a condition-based price suggestion if you set a token, converted into your preferred currency (EUR, USD or GBP).
+- **Statistics** – Genre distribution, sleeve condition, records by release year, most valuable records and latest additions.
+- **Wishlist** – Keep track of future finds and move them into your collection once you own them.
+- **Print and PDF** – Export your collection or wishlist as a printable list.
+- **Access control** – Login with admin and guest accounts, an IP blocklist, and visibility settings for individual records and genres.
+- **Backups** – Manual export and import, plus scheduled backups with a retention limit.
+- **Themes** – Several color themes, each with light and dark mode.
+- **Five languages** – English, German, French, Spanish and Italian, switchable per user.
+
+<br/><br/>
+
+## <img src="https://api.iconify.design/lucide/image.svg?color=%23FF89A9" width="20"> Screenshots
+
+<div align="center">
+
+| Dashboard | Collection |
+| :---: | :---: |
+| <img src="docs/screenshots/dashboard.png" width="100%"> | <img src="docs/screenshots/collection.png" width="100%"> |
+
+| Statistics | Wishlist |
+| :---: | :---: |
+| <img src="docs/screenshots/statistics.png" width="100%"> | <img src="docs/screenshots/wishlist.png" width="100%"> |
+
+</div>
+
+<br/><br/>
+
+## <img src="https://api.iconify.design/lucide/layers-3.svg?color=%23FF89A9" width="20"> Tech Stack
+
+| **Area** | **Technology** | **Purpose** |
+| :--- | :--- | :--- |
+| **Backend** | <img src="https://go-skill-icons.vercel.app/api/icons?i=nodejs,express&theme=dark" valign="middle" /> | Node.js and Express, login with JWT cookies, i18next for translations |
+| **Frontend** | <img src="https://go-skill-icons.vercel.app/api/icons?i=html,tailwind,js&theme=dark" valign="middle" /> | Server-rendered EJS templates, Tailwind CSS, charts with Chart.js |
+| **Database** | <img src="https://go-skill-icons.vercel.app/api/icons?i=mongodb&theme=dark" valign="middle" /> | MongoDB with Mongoose |
+| **Data source** | Discogs API | Metadata, tracklists and market prices |
+| **Container** | <img src="https://go-skill-icons.vercel.app/api/icons?i=docker&theme=dark" valign="middle" /> | Image published to GHCR via GitHub Actions |
+
+<br/><br/>
+
+## <img src="https://api.iconify.design/lucide/rocket.svg?color=%23FF89A9" width="20"> Getting Started
+
+### Prerequisites
+
+- Docker with Compose
+
+### Installation
 
 ```bash
 git clone https://github.com/xXJimnyCricketXx/RecordRanger.git
 cd RecordRanger
-cp .env.example .env
-# edit .env and set at least PASSJWT and SESSION_SECRET (see Configuration below)
+cp .env.example .env    # set PASSJWT and SESSION_SECRET
 docker compose up -d
 ```
 
-The app is then available at `http://localhost:3099`. See the [Docker Deployment Guide](./docs/docker.md) for the pre-built image option and troubleshooting.
+The app is now available at:
 
-## Unraid
+```text
+http://localhost:3099
+```
 
-A ready-made template is available at [`unraid-template/recordranger.xml`](unraid-template/recordranger.xml). In Unraid, go to **Docker → Add Container**, paste the raw GitHub URL of that file into the **Template** field, and port, paths, and variables will be pre-filled. See the [Docker Deployment Guide](./docs/docker.md#option-3-unraid) for details.
+On first start, the setup page creates the admin account or restores an existing backup.
 
-## Configuration
+### More documentation
+
+- [Getting started](docs/getting-started.md) – Manual installation with Node.js and MongoDB.
+- [Docker deployment](docs/docker.md) – Docker Compose, the pre-built image and troubleshooting.
+- [API configuration](docs/api-keys.md) – How to get a Discogs token.
+
+<br/><br/>
+
+## <img src="https://api.iconify.design/lucide/container.svg?color=%23FF89A9" width="20"> Unraid
+
+The image is built by GitHub Actions on every push to `main` and on `v*` tags
+([docker-publish.yml](.github/workflows/docker-publish.yml)):
+
+```text
+ghcr.io/xxjimnycricketxx/recordranger:latest
+```
+
+RecordRanger needs a MongoDB instance, so install a MongoDB container first and note its IP address.
+
+**1. Install the template.** On the Unraid console:
+
+```bash
+curl -fsSL -o /boot/config/plugins/dockerMan/templates-user/recordranger.xml https://raw.githubusercontent.com/xXJimnyCricketXx/RecordRanger/main/unraid-template/recordranger.xml
+```
+
+**2. Create the container.** Go to *Docker → Add Container → Template: recordranger*, then set the MongoDB URL, `PASSJWT` and `SESSION_SECRET`.
+
+Port `18002` and the appdata paths under `/mnt/user/appdata/recordranger` are pre-filled.
+
+**Updates:** *Docker → Check for Updates*, then apply the update for RecordRanger.
+
+<br/><br/>
+
+## <img src="https://api.iconify.design/lucide/settings.svg?color=%23FF89A9" width="20"> Configuration
+
+Configuration is handled through environment variables. See [`.env.example`](.env.example) for a starting point.
 
 | Variable | Required | Description |
-|---|---|---|
-| `MONGODB_URL` | yes | Connection string for your MongoDB instance |
-| `PASSJWT` | yes | Complex password used for JWT token encryption |
-| `SESSION_SECRET` | yes | Complex secret used for session encryption |
-| `PROD` | no | Set to `true` **only** if serving over HTTPS via a reverse proxy; otherwise leave `false` |
-| `VINYL_PORT` | no | Port the app listens on inside the container (default: `3099`) |
-| `BASE_URL` | no | Base path for serving on a sub-path, leave empty to serve from root |
-| `DISCOGS_TOKEN` | no | Discogs API token — the app works without it, but with lower rate limits and no condition-based price suggestions. See [API Configuration](./docs/api-keys.md) |
+| --- | :---: | --- |
+| `MONGODB_URL` | ✅ | Connection string for your MongoDB instance |
+| `PASSJWT` | ✅ | Long random secret used to sign login tokens |
+| `SESSION_SECRET` | ✅ | Long random secret used for sessions |
+| `PROD` | ❌ | Set to `true` **only** if you serve the app over HTTPS through a reverse proxy, otherwise `false` |
+| `VINYL_PORT` | ❌ | Port the app listens on inside the container (default: `3099`) |
+| `BASE_URL` | ❌ | Base path for serving on a sub-path, leave empty to serve from root |
+| `DISCOGS_TOKEN` | ❌ | Discogs token for higher rate limits and condition-based price suggestions. See [API configuration](docs/api-keys.md) |
 
-## Tech Stack
+> [!IMPORTANT]
+> Replace the example values of `PASSJWT` and `SESSION_SECRET` with your own random secrets.
+> The barcode scanner needs HTTPS, because browsers only allow camera access on secure pages.
 
-| Component | Technology |
-|---|---|
-| Backend | Node.js / Express |
-| Database | MongoDB |
-| Frontend | EJS Templates |
-| Styling | Tailwind CSS |
-| Localization | i18next |
-| API | Discogs |
+<br/><br/>
 
-## Documentation
+## <img src="https://api.iconify.design/lucide/folder-tree.svg?color=%23FF89A9" width="20"> Project Structure
 
-- 🏁 [**Getting Started**](./docs/getting-started.md) - Manual installation and requirements.
-- 🐳 [**Docker Deployment**](./docs/docker.md) - Docker Compose, pre-built image, and Unraid.
-- 🔑 [**API Configuration**](./docs/api-keys.md) - How to obtain your Discogs API key.
+```text
+RecordRanger/
+├── app.js               # Entry point: middleware, routes, database, sockets
+├── config/              # Database connection, constants, color themes
+├── controllers/         # Login and logout
+├── docs/                # Setup guides and images
+├── locales/             # Translations (de, en, es, fr, it)
+├── middleware/          # Authentication and settings
+├── models/              # Mongoose schemas
+├── public/              # Static files and uploads
+├── public-tpl/          # Web app manifest and service worker templates
+├── routes/              # Albums, admin, backups, settings, setup
+├── unraid-template/     # Unraid container template
+├── utils/               # Backups, currency conversion, migrations, visibility
+├── views/               # EJS templates
+├── docker-compose.yml
+└── Dockerfile
+```
 
-## License
+<br/><br/>
 
-Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more information.
+## <img src="https://api.iconify.design/lucide/map.svg?color=%23FF89A9" width="20"> Roadmap
+
+| **Version** | **Features** | **Status** |
+| :---: | :--- | :---: |
+| **Next** | <ul><li>Safer backup restore and duplicate handling</li><li>More stability during database outages</li><li>Further security hardening</li><li>Major dependency upgrades and automated tests</li></ul> | <img src="https://img.shields.io/badge/Planned-6E7681?style=for-the-badge" alt="Planned"> |
+| **1.0.1** | <ul><li>First-run setup is locked once an admin exists</li><li>Avatar uploads only accept real image files</li><li>Fixed cross-site scripting issues in the admin panel, statistics and duplicate check</li><li>Hidden records and genres stay hidden on every page</li><li>Estimating, importing and editing are admin-only</li><li>Stricter input validation and updated dependencies</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
+| **1.0.0** | <ul><li>Discogs search, barcode scanner and manual entry</li><li>Discogs and Musik-Sammler import</li><li>Value estimates with currency conversion</li><li>Statistics, duplicate check, print and PDF export</li><li>Scheduled backups, color themes, five languages</li><li>Docker image and Unraid template</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
+
+See the [open issues](../../issues) for planned features and known problems.
+
+<br/><br/>
+
+## <img src="https://api.iconify.design/lucide/code-2.svg?color=%23FF89A9" width="20"> Development
+
+Requires Node.js 20 or newer and a running MongoDB. Set `MONGODB_URL` in `.env` to your local instance, then run:
+
+```bash
+npm install
+npm run dev
+```
+
+The app reloads on changes. There are no automated tests yet.
+
+<br/><br/>
+
+## <img src="https://api.iconify.design/lucide/git-pull-request.svg?color=%23FF89A9" width="20"> Contributing
+
+Issues and pull requests are welcome. Please open an issue first for larger changes.
+
+<br/><br/>
+
+## <img src="https://api.iconify.design/lucide/scale.svg?color=%23FF89A9" width="20"> License
+
+This project is licensed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
+
+RecordRanger is based on [DVinyl](https://github.com/Kyonew/DVinyl).
+
+<br/><br/>
+
+---
+
+<br>
+
+<div align="center">
+
+<a href="https://github.com/xXJimnyCricketXx">
+  <img src="https://img.shields.io/badge/GitHub-271B48?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+</a>
+<a href="https://cricketcode.de">
+  <img src="https://img.shields.io/badge/Website-271B48?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Website">
+</a>
+
+</div>

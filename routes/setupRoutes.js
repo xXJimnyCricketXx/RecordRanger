@@ -29,6 +29,9 @@ router.get('/', async (req, res) => {
 // POST /setup - create initial admin user and issue a JWT
 router.post('/', async (req, res) => {
     try {
+        const count = await User.countDocuments();
+        if (count > 0) return res.redirect('/login'); // safety: only allow setup when DB empty
+
         const { username, email, password, language } = req.body;
         
         // Create the initial admin user (isAdmin: true)

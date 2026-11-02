@@ -14,6 +14,28 @@ const { requireAuth } = require('../middleware/authMiddleware');
  * and password changes. Uses Multer for avatar uploads with local storage.
  */
 
+const AVATAR_EXTENSIONS = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/gif': '.gif',
+    'image/webp': '.webp'
+};
+const SUPPORTED_LANGUAGES = ['en', 'fr', 'de', 'es', 'it'];
+
+// The browser-supplied mimetype can be faked, so check the file signature too
+const isImageFile = (filePath) => {
+    const fd = fs.openSync(filePath, 'r');
+    const b = Buffer.alloc(12);
+    fs.readSync(fd, b, 0, 12, 0);
+    fs.closeSync(fd);
+    return (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF)
+        || b.subarray(0, 4).toString('hex') === '89504e47'
+        || b.subarray(0, 4).toString('latin1') === 'GIF8'
+        || (b.subarray(0, 4).toString('latin1') === 'RIFF' && b.subarray(8, 12).toString('latin1') === 'WEBP');
+};
+
+const parseUsername = (value) => (typeof value === 'string' ? value.trim() : '');
+
 // Multer configuration (image uploads)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -23,7 +45,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
         // Keep a timestamp to avoid browser cache and include user ID for clarity
-        const ext = path.extname(file.originalname);
+        const ext = AVATAR_EXTENSIONS[file.mimetype];
         const userId = req.user ? req.user._id : 'unknown'; // req.user is available via requireAuth
         cb(null, `avatar-${userId}-${Date.now()}${ext}`);
   }
@@ -34,12 +56,18 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (allowedTypes.includes(file.mimetype)) cb(null, true);
+        if (AVATAR_EXTENSIONS[file.mimetype]) cb(null, true);
         else cb(new Error('Format non supporté (JPG, PNG, GIF, WEBP uniquement).'));
     },
     limits: { fileSize: 5 * 1024 * 1024 },
 });
+
+const handleAvatarUpload = (req, res, next) => {
+    upload.single('avatar')(req, res, (err) => {
+        if (err) return res.status(400).json({ success: false, message: req.t('messages.avatar_upload_error') });
+        next();
+    });
+};
 
 
 // Routes
@@ -51,7 +79,8 @@ router.get('/', requireAuth, (req, res) => {
 
 // Check whether a username is available
 router.post('/check-username', requireAuth, async (req, res) => {
-    const { username } = req.body;
+    const username = parseUsername(req.body.username);
+    if (!username) return res.status(400).json({ success: false, message: req.t('auth.username_required') });
     try {
         // If user checks their current username, consider it available
         if (username === res.locals.user.username) {
@@ -70,7 +99,8 @@ router.post('/check-username', requireAuth, async (req, res) => {
 
 // Update username
 router.post('/update-username', requireAuth, async (req, res) => {
-    const { username } = req.body;
+    const username = parseUsername(req.body.username);
+    if (!username) return res.status(400).json({ success: false, message: req.t('auth.username_required') });
     try {
         const userExists = await User.findOne({ username: username });
         if (userExists && userExists._id.toString() !== res.locals.user._id.toString()) {
@@ -84,11 +114,16 @@ router.post('/update-username', requireAuth, async (req, res) => {
 });
 
 // Upload avatar
-router.post('/upload-avatar', requireAuth, upload.single('avatar'), async (req, res) => {
+router.post('/upload-avatar', requireAuth, handleAvatarUpload, async (req, res) => {
     // Multer error handling
     if (!req.file) return res.status(400).json({ success: false, message: req.t('messages.avatar_upload_error') });
 
     try {
+        if (!isImageFile(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: req.t('messages.avatar_upload_error') });
+        }
+
         const userId = res.locals.user._id;
 
         // Retrieve previous avatar to remove it from disk
@@ -120,6 +155,9 @@ router.post('/upload-avatar', requireAuth, upload.single('avatar'), async (req, 
 // Update Password
 router.post('/update-password', requireAuth, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
+    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
+        return res.status(400).json({ success: false, message: req.t('auth.password_required') });
+    }
     try {
         // Verify current password
         const user = await User.findById(res.locals.user._id);
@@ -129,6 +167,10 @@ router.post('/update-password', requireAuth, async (req, res) => {
             return res.status(400).json({ success: false, message: req.t('errors.current_password_incorrect') });
         }
         
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: req.t('auth.password_too_short') });
+        }
+
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         await User.findByIdAndUpdate(res.locals.user._id, { 
             password: hashedPassword, 
@@ -164,6 +206,10 @@ router.post('/update-language', requireAuth, async (req, res) => {
   const { language } = req.body;
   const userId = res.locals.user._id;
 
+  if (!SUPPORTED_LANGUAGES.includes(language)) {
+    return res.status(400).send(req.t('errors.lang_change_error'));
+  }
+
   try {
     // Update language in DB
     await User.findByIdAndUpdate(userId, { language });
@@ -172,7 +218,12 @@ router.post('/update-language', requireAuth, async (req, res) => {
     await req.i18n.changeLanguage(language);
 
     // Redirect back or to settings page
-    const backURL = req.header('Referer') || '/settings';
+    // Only keep the path of the referer so this can't redirect to another site
+    let backURL = '/settings';
+    try {
+      const referer = new URL(req.header('Referer'));
+      backURL = (referer.pathname + referer.search).replace(/^\/+/, '/');
+    } catch (e) { /* missing or invalid referer */ }
     res.redirect(backURL);
 
   } catch (err) {

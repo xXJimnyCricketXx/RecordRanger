@@ -177,7 +177,9 @@ router.get('/', requireAuth, async (req, res) => {
 router.get('/stats', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
-        const allItems = await Item.find({ owner: adminId, in_wishlist: false }).lean();
+        const statsQuery = { owner: adminId, in_wishlist: false };
+        applyVisibilityFilter(statsQuery, res.locals.isAdmin, res.locals.settings);
+        const allItems = await Item.find(statsQuery).lean();
 
         // Totals
         const totalVinyls = allItems.reduce((a, i) => a + (i.quantity || 1), 0);
@@ -252,6 +254,11 @@ router.get('/collection', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
         const { search, type, format, location, genre, style, decade, noEstimate } = req.query;
+        const visibleQuery = (extra = {}) => {
+            const q = { owner: adminId, ...extra };
+            applyVisibilityFilter(q, res.locals.isAdmin, res.locals.settings);
+            return q;
+        };
         let sort = req.query.sort;
         if (sort) {
             res.cookie('sortPref', sort, { maxAge: 365 * 24 * 60 * 60 * 1000 });
@@ -390,21 +397,20 @@ router.get('/collection', requireAuth, async (req, res) => {
             queryFilterMode: filterMode,
             currentSort: sort,
 
-            locations: await Item.distinct('location', { owner: adminId }),
+            locations: await Item.distinct('location', visibleQuery()),
             genres: await (async () => {
                 const typeQuery = { $or: [{ kind: 'Music' }, { kind: { $exists: false } }] };
 
                 const [gBase, gArray] = await Promise.all([
-                    Item.distinct('genre', { owner: adminId, ...typeQuery, genre: { $nin: ['', null] } }),
-                    Item.distinct('genres', { owner: adminId, ...typeQuery })
+                    Item.distinct('genre', visibleQuery({ ...typeQuery, genre: { $nin: ['', null] } })),
+                    Item.distinct('genres', visibleQuery(typeQuery))
                 ]);
                 return [...new Set([...gBase, ...gArray])].filter(Boolean).sort();
             })(),
             styles: await (async () => {
-                const sArray = await Item.distinct('styles', {
-                    owner: adminId,
+                const sArray = await Item.distinct('styles', visibleQuery({
                     $or: [{ kind: 'Music' }, { kind: { $exists: false } }]
-                });
+                }));
                 return [...new Set(sArray)].filter(Boolean).sort();
             })(),
             standardFormatTerms: STANDARD_FORMAT_TERMS,
@@ -438,7 +444,7 @@ router.get('/add-vinyl/manual', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // route for editing an existing album
-router.get('/album/edit/:id', requireAuth, async (req, res) => {
+router.get('/album/edit/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const album = await Item.findById(req.params.id);
         if (!album) {
@@ -563,8 +569,9 @@ router.post('/search-discogs', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // Confirmation with extended info
-router.get('/confirm-vinyl/:id', requireAuth, async (req, res) => {
+router.get('/confirm-vinyl/:id', requireAuth, requireAdmin, async (req, res) => {
     const discogsId = req.params.id;
+    if (!/^\d+$/.test(discogsId)) return res.redirect('/add-vinyl');
     const searchTypeHint = req.query.type; // 'vinyl', 'cd', or 'cassette'
     const token = discogsToken();
 
@@ -786,7 +793,7 @@ router.post('/api/album/:id/move-to-collection', requireAuth, requireAdmin, asyn
 });
 
 // API route to fetch all collection discogs IDs (used for global estimates)
-router.get('/api/collection/ids', requireAuth, async (req, res) => {
+router.get('/api/collection/ids', requireAuth, requireAdmin, async (req, res) => {
     try {
         const adminId = await getAdminId();
         const albums = await Item.find({
@@ -805,7 +812,7 @@ router.get('/api/collection/ids', requireAuth, async (req, res) => {
 });
 
 // Duplicate check
-router.get('/api/check-duplicate', requireAuth, async (req, res) => {
+router.get('/api/check-duplicate', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { title, artist, excludeId } = req.query;
         if (!title || !artist) return res.json({ duplicate: false });
@@ -854,7 +861,9 @@ router.post('/api/increment-quantity/:id', requireAuth, requireAdmin, async (req
 router.get('/print/collection', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
-        const items = await Item.find({ owner: adminId, in_wishlist: false })
+        const query = { owner: adminId, in_wishlist: false };
+        applyVisibilityFilter(query, res.locals.isAdmin, res.locals.settings);
+        const items = await Item.find(query)
             .sort({ artist: 1, title: 1 })
             .lean();
         res.render('print', {
@@ -870,7 +879,9 @@ router.get('/print/collection', requireAuth, async (req, res) => {
 router.get('/print/wishlist', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
-        const items = await Item.find({ owner: adminId, in_wishlist: true })
+        const query = { owner: adminId, in_wishlist: true };
+        applyVisibilityFilter(query, res.locals.isAdmin, res.locals.settings);
+        const items = await Item.find(query)
             .sort({ artist: 1, title: 1 })
             .lean();
         res.render('print', {
@@ -907,7 +918,9 @@ router.get('/wishlist', requireAuth, async (req, res) => {
 // collection item detail
 router.get('/album/:id', requireAuth, async (req, res) => {
     try {
-        const album = await Item.findById(req.params.id);
+        const query = { _id: req.params.id };
+        applyVisibilityFilter(query, res.locals.isAdmin, res.locals.settings);
+        const album = await Item.findOne(query);
         if (!album) return res.redirect('/collection?type=music');
         const albumFormatted = formatForView(album);
 
@@ -943,9 +956,10 @@ router.delete('/api/album/:id', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // Estimate route (Discogs API)
-router.get('/api/estimate/:discogsId', requireAuth, async (req, res) => {
+router.get('/api/estimate/:discogsId', requireAuth, requireAdmin, async (req, res) => {
     try {
         const discogsId = req.params.discogsId;
+        if (!/^\d+$/.test(discogsId)) return res.status(400).json({ success: false });
         const token = discogsToken();
         const userCurrency = res.locals.user.currency || 'USD';
         const headers = discogsHeaders(token);
@@ -1103,11 +1117,12 @@ router.get('/api/estimate/:discogsId', requireAuth, async (req, res) => {
 });
 
 // Discogs import route (starts the import process)
-router.post('/import/discogs', requireAuth, async (req, res) => {
+router.post('/import/discogs', requireAuth, requireAdmin, async (req, res) => {
     const { discogsUrl, full, type } = req.body;
     const userId = req.user._id;
     const token = discogsToken();
 
+    if (typeof discogsUrl !== 'string') return res.status(400).json({ error: "Invalid Discogs URL" });
     const usernameMatch = discogsUrl.match(/(?:user\/|user=)([^/?&]+)/);
     if (!usernameMatch) return res.status(400).json({ error: "Invalid Discogs URL" });
     const username = usernameMatch[1];

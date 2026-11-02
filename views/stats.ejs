@@ -193,22 +193,22 @@
     Chart.defaults.font.size = 11;
 
     const isDark = <%- isDark ? 'true' : 'false' %>;
-    const pink = <%- JSON.stringify(highlightColor) %>;
+    const pink = <%- safeJson(highlightColor) %>;
     const gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
     const tickColor = isDark ? '#999' : '#888';
-    const legendColor = <%- JSON.stringify(textColor) %>;
-    const pieBorderColor = <%- JSON.stringify(cardColor) %>;
+    const legendColor = <%- safeJson(textColor) %>;
+    const pieBorderColor = <%- safeJson(cardColor) %>;
     const commonScales = {
         y: { beginAtZero: true, ticks: { precision: 0, color: tickColor }, grid: { color: gridColor }, border: { display: false } },
         x: { grid: { display: false }, ticks: { color: tickColor } }
     };
 
-    const genreLabels = <%- JSON.stringify(genres.map(g => g[0])) %>;
-    const genreValues = <%- JSON.stringify(genres.map(g => g[1])) %>;
-    const yearLabels  = <%- JSON.stringify(years.map(y => y[0])) %>;
-    const yearValues  = <%- JSON.stringify(years.map(y => y[1])) %>;
-    const condLabels  = <%- JSON.stringify(conditions.map(c => c[0])) %>;
-    const condValues  = <%- JSON.stringify(conditions.map(c => c[1])) %>;
+    const genreLabels = <%- safeJson(genres.map(g => g[0])) %>;
+    const genreValues = <%- safeJson(genres.map(g => g[1])) %>;
+    const yearLabels  = <%- safeJson(years.map(y => y[0])) %>;
+    const yearValues  = <%- safeJson(years.map(y => y[1])) %>;
+    const condLabels  = <%- safeJson(conditions.map(c => c[0])) %>;
+    const condValues  = <%- safeJson(conditions.map(c => c[1])) %>;
 
     // Genre bar chart
     new Chart(document.getElementById('genreChart'), {

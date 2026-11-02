@@ -28,6 +28,10 @@
 <script>
     let _dupFormSubmitFn = null;
 
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
     function closeDuplicateModal() {
         document.getElementById('duplicateModal').classList.add('hidden');
         _dupFormSubmitFn = null;
@@ -52,13 +56,13 @@
                 const item = document.createElement('div');
                 item.className = 'flex items-center gap-4 p-4 rounded-2xl bg-black/5 dark:bg-white/5';
                 item.innerHTML = `
-                    <img src="${m.cover_image || ''}" alt="" class="w-14 h-14 rounded-xl object-cover flex-shrink-0 bg-black/10">
+                    <img src="${escapeHtml(m.cover_image)}" alt="" class="w-14 h-14 rounded-xl object-cover flex-shrink-0 bg-black/10">
                     <div class="min-w-0 flex-grow">
-                        <p class="font-bold truncate">${m.title}</p>
-                        <p class="text-sm opacity-60 truncate">${m.artist}</p>
-                        <p class="text-xs opacity-40 mt-0.5">${[m.year, m.label, m.format_type].filter(Boolean).join(' · ')} · Menge: ${m.quantity || 1}</p>
+                        <p class="font-bold truncate">${escapeHtml(m.title)}</p>
+                        <p class="text-sm opacity-60 truncate">${escapeHtml(m.artist)}</p>
+                        <p class="text-xs opacity-40 mt-0.5">${escapeHtml([m.year, m.label, m.format_type].filter(Boolean).join(' · '))} · Menge: ${escapeHtml(m.quantity || 1)}</p>
                     </div>
-                    <button data-id="${m._id}" data-redirect="/album/${m._id}"
+                    <button data-id="${escapeHtml(m._id)}" data-redirect="/album/${escapeHtml(m._id)}"
                         class="dup-increment-btn flex-shrink-0 bg-primary-theme hover:brightness-110 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all active:scale-95 whitespace-nowrap">
                         <i class="fa-solid fa-plus mr-1"></i>Menge +1
                     </button>`;

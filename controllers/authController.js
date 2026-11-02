@@ -58,6 +58,10 @@ module.exports.login_post = async (req, res) => {
   const { email, password } = req.body;
   const now = Date.now();
 
+  if (typeof email !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ errors: { login: req.t('errors.invalid_credentials') } });
+  }
+
   // Check whether this email is temporarily blocked due to repeated failures.
   if (loginAttempts[email] && loginAttempts[email].blockedUntil && now < loginAttempts[email].blockedUntil) {
     const secondsLeft = Math.ceil((loginAttempts[email].blockedUntil - now) / 1000);
