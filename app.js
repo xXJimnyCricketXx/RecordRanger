@@ -37,6 +37,11 @@ const adminRoutes = require('./routes/adminRoutes.js');
 const settingsRoutes = require('./routes/settingsRoutes.js');
 const backupRoutes = require('./routes/backupRoutes.js');
 
+// A forgotten await must not take the whole app down
+process.on('unhandledRejection', (reason) => {
+  console.error('[ERR] Unhandled rejection:', reason);
+});
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -109,6 +114,14 @@ app.use((req, res, next) => {
     }
   };
 
+  next();
+});
+
+// Without a database no page can work: answer right away instead of hanging
+app.use((req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).send(req.t('errors.database_unavailable'));
+  }
   next();
 });
 
@@ -209,20 +222,42 @@ app.use((req, res) => {
     res.status(404).render('404');
 });
 
+// Last resort: log the details, never send a stack trace to the browser
+app.use((err, req, res, next) => {
+    console.error('[ERR]', req.method, req.originalUrl, err);
+    if (res.headersSent) return next(err);
+    res.status(err.status || err.statusCode || 500)
+        .send(req.t ? req.t('errors.generic_server_error') : 'Internal server error.');
+});
+
 const connectDB = require('./config/db.js');
 const migrateDatabase = require('./utils/migrate.js');
 const { startScheduler } = require('./utils/backupScheduler.js');
-// Database connection and server start
-connectDB()
+// The database may start later than the app (e.g. after a server reboot), so keep trying
+const connectWithRetry = async () => {
+  for (;;) {
+    try {
+      await connectDB();
+      return;
+    } catch (err) {
+      console.log('❌DB Error:', err.message);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+  }
+};
+
+// Server start and database connection
+const port = process.env.VINYL_PORT || 3099;
+server.listen(port, () => {
+    console.log(`🚀 Server started on port ${port}`);
+});
+
+connectWithRetry()
   .then(async () => {
     await migrateDatabase();
     startScheduler();
-    const port = process.env.VINYL_PORT || 3099;
-    server.listen(port, () => {
-        console.log(`🚀 Server started on port ${port}`);
-    });
   })
-  .catch((err) => console.log('❌DB Error:', err));
+  .catch((err) => console.error('[ERR] Startup:', err));
 
 
 // Socket event

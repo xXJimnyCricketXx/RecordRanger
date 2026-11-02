@@ -57,6 +57,9 @@
     "currency_gbp": "Livre sterling (£)"
   },
   "errors": {
+    "duplicate_check_failed": "La vérification des doublons a échoué. Le disque n'a pas été enregistré, veuillez réessayer.",
+    "invalid_discogs_id": "L'ID Discogs ne doit contenir que des chiffres.",
+    "database_unavailable": "La base de données est actuellement indisponible. Veuillez réessayer dans un instant.",
     "username_taken": "Ce pseudo est déjà utilisé.",
     "current_password_incorrect": "Le mot de passe actuel est incorrect.",
     "invalid_theme": "Thème invalide.",
@@ -232,6 +235,7 @@
       "import_submit": "Lancer l'importation",
       "import_loading": "Importation en cours...",
       "import_done": "items ajoutés !",
+      "import_skipped": "déjà présents et ignorés",
       "import_error_msg": "Une erreur est survenue lors de l'importation. Vérifiez l'URL ou votre jeton API.",
       "import_fast": "Importation Rapide",
       "import_full": "Importation Complète",

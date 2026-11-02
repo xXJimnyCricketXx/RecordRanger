@@ -10,7 +10,7 @@ const { requireAuth, requireAdmin } = require('../middleware/authMiddleware'); /
 const User = require('../models/User');
 const { STANDARD_FORMAT_TERMS } = require('../config/constants');
 const { applyVisibilityFilter } = require('../utils/visibilityHelper');
-const { convertCurrency } = require('../utils/currencyHelper');
+const { convertCurrency, createValueConverter } = require('../utils/currencyHelper');
 
 // Gibt den Discogs-Token zurück – oder leeren String wenn nicht konfiguriert
 function discogsToken() {
@@ -73,6 +73,22 @@ async function discogsFetch(url, headers, attempt = 0) {
     return { ok: true, status: res.status, json, rateLimited: false };
 }
 
+// Returns a number, null for "no ID" and NaN for anything that is not a valid ID
+function parseDiscogsId(value) {
+    const id = String(value ?? '').trim();
+    if (!id) return null;
+    return /^\d+$/.test(id) ? Number(id) : NaN;
+}
+
+// Same title and artist, ignoring case and the "(2)" suffix Discogs adds to artist names
+function titleArtistQuery(title, artist) {
+    const baseArtist = artist.trim().replace(/\s*\(\d+\)$/i, '').trim();
+    return {
+        title: new RegExp(`^${escapeRegExp(title.trim())}$`, 'i'),
+        artist: new RegExp(`^${escapeRegExp(baseArtist)}(\\s*\\(\\d+\\))?$`, 'i')
+    };
+}
+
 async function getAdminId() {
     const admin = await User.findOne({ isAdmin: true }).select('_id');
     return admin ? admin._id : null;
@@ -120,11 +136,15 @@ router.get('/', requireAuth, async (req, res) => {
         };
 
         const userCurrency = res.locals.user.currency || 'EUR';
-        const totalValue = allItems.reduce((acc, i) => {
-            const price = i.estimated_price && i.estimated_price.value;
-            return price ? acc + (price * (i.quantity || 1)) : acc;
-        }, 0);
-        const valuedCount = allItems.filter(i => i.estimated_price && i.estimated_price.value).length;
+        const valueOf = await createValueConverter(allItems, userCurrency);
+        let totalValue = 0;
+        let valuedCount = 0;
+        allItems.forEach(i => {
+            const value = valueOf(i);
+            if (value === null) return;
+            totalValue += value * (i.quantity || 1);
+            valuedCount += i.quantity || 1;
+        });
 
         const stats = {
             total: allItems.reduce((acc, i) => acc + (i.quantity || 1), 0),
@@ -184,10 +204,8 @@ router.get('/stats', requireAuth, async (req, res) => {
         // Totals
         const totalVinyls = allItems.reduce((a, i) => a + (i.quantity || 1), 0);
         const currency = res.locals.user.currency || 'EUR';
-        const totalValue = allItems.reduce((a, i) => {
-            const p = i.estimated_price && i.estimated_price.value;
-            return p ? a + p * (i.quantity || 1) : a;
-        }, 0);
+        const valueOf = await createValueConverter(allItems, currency);
+        const totalValue = allItems.reduce((a, i) => a + (valueOf(i) || 0) * (i.quantity || 1), 0);
 
         // Genre distribution (use genres array, fallback to genre string)
         const genreMap = {};
@@ -228,7 +246,7 @@ router.get('/stats', requireAuth, async (req, res) => {
         // Top 10 most valuable
         const mostValuable = allItems
             .filter(i => i.estimated_price && i.estimated_price.value)
-            .sort((a, b) => (b.estimated_price.value * (b.quantity || 1)) - (a.estimated_price.value * (a.quantity || 1)))
+            .sort((a, b) => ((valueOf(b) || 0) * (b.quantity || 1)) - ((valueOf(a) || 0) * (a.quantity || 1)))
             .slice(0, 10)
             .map(formatForView);
 
@@ -691,14 +709,18 @@ router.post('/save-vinyl', requireAuth, requireAdmin, async (req, res) => {
         const isWishlist = in_wishlist === 'true';
         const isBarcodeLocked = barcode_locked === 'on' || barcode_locked === 'true' || barcode_locked === true;
 
+        const discogsId = parseDiscogsId(discogs_id);
+        if (Number.isNaN(discogsId)) {
+            return res.status(400).send(req.t('errors.invalid_discogs_id'));
+        }
+
+        // Only an edit (mongo_id) changes an existing entry. Without it this is
+        // always a new entry: the duplicate dialog has already asked by now.
         let album;
 
         if (mongo_id) {
             album = await Item.findById(mongo_id);
-        }
-
-        if (!album && discogs_id) {
-            album = await Item.findOne({ discogs_id: discogs_id, owner: adminId });
+            if (!album) return res.status(404).render('404');
         }
 
         let tracklist = [];
@@ -712,7 +734,7 @@ router.post('/save-vinyl', requireAuth, requireAdmin, async (req, res) => {
             const updateData = {
                 title: title,
                 artist: artist || album.artist,
-                discogs_id: discogs_id,
+                ...(discogs_id !== undefined && { discogs_id: discogsId }),
                 year: year,
                 label: label,
                 catalog_number: catalog_number,
@@ -753,7 +775,7 @@ router.post('/save-vinyl', requireAuth, requireAdmin, async (req, res) => {
                 tracklist,
                 cover_image,
                 user_image,
-                discogs_id,
+                discogs_id: discogsId,
                 media_type: media_type || 'vinyl',
                 in_wishlist: isWishlist,
                 owner: adminId,
@@ -814,20 +836,18 @@ router.get('/api/collection/ids', requireAuth, requireAdmin, async (req, res) =>
 // Duplicate check
 router.get('/api/check-duplicate', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { title, artist, excludeId } = req.query;
-        if (!title || !artist) return res.json({ duplicate: false });
+        const { title, artist, discogsId } = req.query;
+
+        const conditions = [];
+        if (typeof title === 'string' && title.trim() && typeof artist === 'string' && artist.trim()) {
+            conditions.push(titleArtistQuery(title, artist));
+        }
+        const id = parseDiscogsId(discogsId);
+        if (id) conditions.push({ discogs_id: id });
+        if (!conditions.length) return res.json({ duplicate: false });
 
         const adminId = await getAdminId();
-        const baseArtist = artist.trim().replace(/\s*\(\d+\)$/i, '').trim();
-
-        const escReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const titleReg  = new RegExp(`^${escReg(title.trim())}$`, 'i');
-        const artistReg = new RegExp(`^${escReg(baseArtist)}(\\s*\\(\\d+\\))?$`, 'i');
-
-        const query = { owner: adminId, title: titleReg, artist: artistReg };
-        if (excludeId) query._id = { $ne: excludeId };
-
-        const matches = await Item.find(query).lean();
+        const matches = await Item.find({ owner: adminId, $or: conditions }).lean();
         if (!matches.length) return res.json({ duplicate: false });
 
         res.json({
@@ -835,8 +855,9 @@ router.get('/api/check-duplicate', requireAuth, requireAdmin, async (req, res) =
             matches: matches.map(formatForView)
         });
     } catch (err) {
+        // Must not look like "no duplicate": the form would save without asking
         console.error(err);
-        res.json({ duplicate: false });
+        res.status(500).json({ error: req.t('errors.duplicate_check_failed') });
     }
 });
 
@@ -969,7 +990,7 @@ router.get('/api/estimate/:discogsId', requireAuth, requireAdmin, async (req, re
         const savePrice = async (priceObj, source) => {
             try {
                 const numId = parseInt(discogsId);
-                const result = await Item.collection.updateOne(
+                const result = await Item.collection.updateMany(
                     { discogs_id: { $in: [numId, String(numId)] }, owner: adminId },
                     { $set: {
                         'estimated_price.value':      priceObj.value,
@@ -993,7 +1014,7 @@ router.get('/api/estimate/:discogsId', requireAuth, requireAdmin, async (req, re
         const saveStatus = async (status) => {
             try {
                 const numId = parseInt(discogsId);
-                await Item.collection.updateOne(
+                await Item.collection.updateMany(
                     { discogs_id: { $in: [numId, String(numId)] }, owner: adminId },
                     { $set: { 'estimated_price.status': status } }
                 );
@@ -1135,7 +1156,12 @@ router.post('/import/discogs', requireAuth, requireAdmin, async (req, res) => {
         let page = 1;
         let totalImported = 0;
         let totalProcessed = 0;
+        let totalSkipped = 0;
         let hasMore = true;
+
+        // Compare with what existed before this run, so several copies of a
+        // release in the Discogs account are all imported, on any page.
+        const knownIds = new Set(await Item.distinct('discogs_id', { owner: userId }));
 
         const isWishlist = (type === 'wishlist');
         const apiUrl = isWishlist ? `https://api.discogs.com/users/${username}/wants` : `https://api.discogs.com/users/${username}/collection/folders/0/releases`;
@@ -1156,9 +1182,18 @@ router.post('/import/discogs', requireAuth, requireAdmin, async (req, res) => {
 
             for (const item of listItems) {
                 const info = item.basic_information;
-                const existing = await Item.findOne({ discogs_id: info.id, owner: userId });
+                // A different Discogs ID is a different pressing. An entry without an ID
+                // and the same title and artist can't be told apart and is kept as is.
+                const existing = knownIds.has(info.id)
+                    ? await Item.findOne({ discogs_id: info.id, owner: userId })
+                    : await Item.findOne({
+                        owner: userId,
+                        discogs_id: null,
+                        ...titleArtistQuery(info.title, info.artists.map(a => a.name).join(', '))
+                    });
 
                 if (existing) {
+                    totalSkipped++;
                     if (full === true && (!existing.tracklist || existing.tracklist.length === 0)) {
                         try {
                             console.log(`🔄 Updating tracklist for existing album ID ${info.id}`);
@@ -1257,7 +1292,7 @@ router.post('/import/discogs', requireAuth, requireAdmin, async (req, res) => {
             else page++;
         }
 
-        req.io.emit('import_finished', { count: totalImported });
+        req.io.emit('import_finished', { count: totalImported, skipped: totalSkipped });
 
     } catch (err) {
         req.io.emit('import_error', { message: err.message });
@@ -1313,7 +1348,9 @@ router.post('/import/musik-sammler', requireAuth, requireAdmin, async (req, res)
 
         let totalImported = 0;
         let totalProcessed = 0;
+        let totalSkipped = 0;
         const totalItems = rows.length - 1;
+        const importedIds = [];
 
         const isWishlist = (type === 'wishlist');
 
@@ -1330,14 +1367,16 @@ router.post('/import/musik-sammler', requireAuth, requireAdmin, async (req, res)
                 continue;
             }
 
-            // Check if already exists
+            // Check if already exists. Rows of this file don't count: two rows with
+            // the same title can be two pressings, and the file has no ID to tell.
             const existing = await Item.findOne({
-                title: { $regex: new RegExp('^' + escapeRegExp(title) + '$', 'i') },
-                artist: { $regex: new RegExp('^' + escapeRegExp(artist) + '$', 'i') },
+                ...titleArtistQuery(title, artist),
+                _id: { $nin: importedIds },
                 owner: userId
             });
 
             if (existing) {
+                totalSkipped++;
                 totalProcessed++;
                 req.io.emit('import_progress', { current: totalProcessed, total: totalItems });
                 continue;
@@ -1425,7 +1464,7 @@ router.post('/import/musik-sammler', requireAuth, requireAdmin, async (req, res)
                 }
             }
 
-            await Vinyl.create({
+            const created = await Vinyl.create({
                 title,
                 artist,
                 year,
@@ -1447,12 +1486,13 @@ router.post('/import/musik-sammler', requireAuth, requireAdmin, async (req, res)
                 added_at: new Date()
             });
 
+            importedIds.push(created._id);
             totalImported++;
             totalProcessed++;
             req.io.emit('import_progress', { current: totalProcessed, total: totalItems });
         }
 
-        req.io.emit('import_finished', { count: totalImported });
+        req.io.emit('import_finished', { count: totalImported, skipped: totalSkipped });
 
     } catch (err) {
         console.error("Musik-Sammler import error:", err);

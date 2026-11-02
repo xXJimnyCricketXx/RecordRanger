@@ -37,12 +37,13 @@
         _dupFormSubmitFn = null;
     }
 
-    async function checkDuplicate(title, artist, excludeId, onNoDuplicate) {
-        if (!title || !artist) { onNoDuplicate(); return; }
+    async function checkDuplicate(title, artist, discogsId, onNoDuplicate) {
+        if (!(title && artist) && !discogsId) { onNoDuplicate(); return; }
         try {
             const params = new URLSearchParams({ title, artist });
-            if (excludeId) params.set('excludeId', excludeId);
+            if (discogsId) params.set('discogsId', discogsId);
             const res = await fetch(`<%= baseUrl %>/api/check-duplicate?${params}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
 
             if (!data.duplicate) { onNoDuplicate(); return; }
@@ -60,7 +61,7 @@
                     <div class="min-w-0 flex-grow">
                         <p class="font-bold truncate">${escapeHtml(m.title)}</p>
                         <p class="text-sm opacity-60 truncate">${escapeHtml(m.artist)}</p>
-                        <p class="text-xs opacity-40 mt-0.5">${escapeHtml([m.year, m.label, m.format_type].filter(Boolean).join(' · '))} · Menge: ${escapeHtml(m.quantity || 1)}</p>
+                        <p class="text-xs opacity-40 mt-0.5">${escapeHtml([m.year, m.label, m.format_type].filter(Boolean).join(' · '))} · Menge: ${escapeHtml(m.quantity || 1)}${m.in_wishlist ? ` · ${escapeHtml(<%- safeJson(t('nav.wishlist')) %>)}` : ''}</p>
                     </div>
                     <button data-id="${escapeHtml(m._id)}" data-redirect="/album/${escapeHtml(m._id)}"
                         class="dup-increment-btn flex-shrink-0 bg-primary-theme hover:brightness-110 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all active:scale-95 whitespace-nowrap">
@@ -76,7 +77,9 @@
 
             document.getElementById('duplicateModal').classList.remove('hidden');
         } catch (e) {
-            onNoDuplicate();
+            // Never save without having checked
+            console.error('Duplicate check failed:', e);
+            alert(<%- safeJson(t('errors.duplicate_check_failed')) %>);
         }
     }
 
@@ -89,10 +92,9 @@
         try {
             const res = await fetch(`<%= baseUrl %>/api/increment-quantity/${btn.dataset.id}`, { method: 'POST' });
             const data = await res.json();
-            if (data.success) {
-                closeDuplicateModal();
-                window.location.href = '<%= baseUrl %>' + data.redirectUrl;
-            }
+            if (!data.success) throw new Error('Increment failed');
+            closeDuplicateModal();
+            window.location.href = '<%= baseUrl %>' + data.redirectUrl;
         } catch (e) {
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-plus mr-1"></i>Menge +1';

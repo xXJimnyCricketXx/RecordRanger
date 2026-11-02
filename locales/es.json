@@ -135,6 +135,7 @@
       "discogs_url": "URL de colección",
       "email": "Dirección de correo electrónico",
       "import_done": "¡Artículos agregados!",
+      "import_skipped": "ya existentes y omitidos",
       "import_error_msg": "Se produjo un error durante la importación. \nVerifique la URL o su token API.",
       "import_fast": "Importación rápida",
       "import_full": "Importación completa",
@@ -328,6 +329,9 @@
     "title": "Editar álbum"
   },
   "errors": {
+    "duplicate_check_failed": "La comprobación de duplicados ha fallado. El disco no se ha guardado, inténtalo de nuevo.",
+    "invalid_discogs_id": "El ID de Discogs solo puede contener dígitos.",
+    "database_unavailable": "La base de datos no está disponible en este momento. Inténtalo de nuevo en breve.",
     "404_desc": "La página que busca parece haber sido eliminada de la colección.",
     "404_title": "¡Ups! \nSurco no encontrado.",
     "api_error": "No se pudo conectar a Discogs.",

@@ -451,11 +451,6 @@
 <%- include('partials/duplicate-check') %>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        updateCvPpFields();
-        document.querySelector('[name="quantity"]')?.addEventListener('input', updateCvPpFields);
-    });
-
     function cvSubmit(wishlistVal) {
         const form = document.querySelector('form[action$="/save-vinyl"]');
         const title  = form.querySelector('[name="title"]')?.value || '';
@@ -470,7 +465,8 @@
         // Skip check when editing an existing entry
         if (mongoId) { doSubmit(); return; }
 
-        checkDuplicate(title, artist, null, doSubmit);
+        const discogsId = form.querySelector('[name="discogs_id"]')?.value || '';
+        checkDuplicate(title, artist, discogsId, doSubmit);
     }
 </script>
 

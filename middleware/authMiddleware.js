@@ -1,6 +1,11 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// A token stays valid unless the user changed after it was issued. iat only has
+// second precision, so lastChange must be rounded down before comparing.
+const isTokenCurrent = (user, decodedToken) =>
+  !user.lastChange || decodedToken.iat >= Math.floor(user.lastChange.getTime() / 1000);
+
 /**
  * Middleware: requireAuth
  * Verifies a JWT from the request cookies and attaches the corresponding
@@ -21,14 +26,18 @@ const requireAuth = async (req, res, next) => {
         console.log(err.message);
         return res.redirect('/login');
       } else {
-        // Retrieve the user and attach it to req.user
-        const user = await User.findById(decodedToken.id);
-        if (!user || (user && user.lastChange && decodedToken.iat * 1000 < user.lastChange.getTime())) {
-          if (res.cookie('jwt')) res.cookie('jwt', '', { maxAge: 1 });
-          return res.redirect('/login');
+        try {
+          // Retrieve the user and attach it to req.user
+          const user = await User.findById(decodedToken.id);
+          if (!user || !isTokenCurrent(user, decodedToken)) {
+            res.cookie('jwt', '', { maxAge: 1 });
+            return res.redirect('/login');
+          }
+          req.user = user; // Attach the user to req.user
+          next();
+        } catch (dbErr) {
+          next(dbErr);
         }
-        req.user = user; // Attach the user to req.user
-        next();
       }
     });
   } else {
@@ -60,15 +69,20 @@ const checkUser = (req, res, next) => {
         req.user = null;
         next();
       } else {
-        let user = await User.findById(decodedToken.id);
-        res.locals.user = user;
-        req.user = user;
+        try {
+          let user = await User.findById(decodedToken.id);
+          if (user && !isTokenCurrent(user, decodedToken)) user = null;
+          res.locals.user = user;
+          req.user = user;
 
-        if (user && user.isAdmin === true) {
-            res.locals.isAdmin = true;
+          if (user && user.isAdmin === true) {
+              res.locals.isAdmin = true;
+          }
+
+          next();
+        } catch (dbErr) {
+          next(dbErr);
         }
-
-        next();
       }
     });
   } else {

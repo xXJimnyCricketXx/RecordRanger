@@ -57,6 +57,9 @@
     "currency_gbp": "British Pound (£)"
   },
   "errors": {
+    "duplicate_check_failed": "The duplicate check failed. The record was not saved, please try again.",
+    "invalid_discogs_id": "The Discogs ID may only contain digits.",
+    "database_unavailable": "The database is currently unavailable. Please try again shortly.",
     "username_taken": "This username is already taken.",
     "current_password_incorrect": "Current password is incorrect.",
     "invalid_theme": "Invalid theme.",
@@ -247,6 +250,7 @@
       "import_submit": "Start Import",
       "import_loading": "Importing...",
       "import_done": "items added!",
+      "import_skipped": "already present and skipped",
       "import_error_msg": "An error occurred during import. Check the URL or your API token.",
       "import_fast": "Fast Import",
       "import_full": "Complete Import",

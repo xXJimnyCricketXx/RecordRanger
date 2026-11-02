@@ -17,6 +17,25 @@ const migrateDatabase = async () => {
             console.log(`[MIGRATION] ${result.modifiedCount} old items updated.`);
         }
 
+        // Older versions stored the Discogs ID as text after an edit. Use the
+        // raw driver: the base Item schema does not know this field.
+        const textIds = await Item.collection
+            .find({ discogs_id: { $type: 'string' } }, { projection: { discogs_id: 1 } })
+            .toArray();
+
+        if (textIds.length > 0) {
+            await Item.collection.bulkWrite(textIds.map(({ _id, discogs_id }) => {
+                const id = discogs_id.trim();
+                return {
+                    updateOne: {
+                        filter: { _id },
+                        update: /^\d+$/.test(id) ? { $set: { discogs_id: Number(id) } } : { $unset: { discogs_id: '' } }
+                    }
+                };
+            }));
+            console.log(`[MIGRATION] ${textIds.length} Discogs IDs converted to numbers.`);
+        }
+
         // Consolidate the old per-page-type theme (theme.home.preset /
         // theme.music.preset) into a single theme.preset now that the app
         // only has one content type left. Also remaps any preset key that

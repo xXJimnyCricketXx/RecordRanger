@@ -135,6 +135,7 @@
       "discogs_url": "URL della raccolta",
       "email": "Indirizzo e-mail",
       "import_done": "elementi aggiunti!",
+      "import_skipped": "già presenti e saltati",
       "import_error_msg": "Si è verificato un errore durante l'importazione. \nControlla l'URL o il token API.",
       "import_fast": "Importazione veloce",
       "import_full": "Importazione completa",
@@ -328,6 +329,9 @@
     "title": "Modifica album"
   },
   "errors": {
+    "duplicate_check_failed": "Il controllo dei duplicati non è riuscito. Il disco non è stato salvato, riprova.",
+    "invalid_discogs_id": "L'ID Discogs può contenere solo cifre.",
+    "database_unavailable": "Il database non è al momento disponibile. Riprova tra poco.",
     "404_desc": "La pagina che stai cercando sembra essere stata cancellata dalla raccolta.",
     "404_title": "Ops! \nScanalatura non trovata.",
     "api_error": "Impossibile connettersi a Discogs.",

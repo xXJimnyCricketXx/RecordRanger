@@ -1000,7 +1000,7 @@
             });
 
             socket.on('import_finished', (data) => {
-                alert(`${data.count} <%= t('admin.modal.import_done') %>`);
+                alert(`${data.count} <%= t('admin.modal.import_done') %>` + (data.skipped ? `\n${data.skipped} ` + <%- safeJson(t('admin.modal.import_skipped')) %> : ''));
                 window.location.reload();
             });
 

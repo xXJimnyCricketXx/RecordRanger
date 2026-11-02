@@ -13,7 +13,7 @@ and market prices from Discogs. Your data stays on your own server.
 
 <p>
   <img src="https://img.shields.io/badge/Status-Beta-FF89A9?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/Version-1.0.1-FF89A9?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.0.2-FF89A9?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Docker-Ready-FF89A9?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/Unraid-Template-FF89A9?style=for-the-badge&logo=unraid&logoColor=white" alt="Unraid">
   <img src="https://img.shields.io/badge/License-MIT-FF89A9?style=for-the-badge" alt="License">
@@ -56,7 +56,7 @@ records and genres they get to see.
 
 - **Adding records** – Search Discogs, paste a Discogs link, scan a barcode or enter a record manually.
 - **Importing** – Bring in your Discogs collection or wishlist, or a CSV export from Musik-Sammler.
-- **Duplicate check** – Warns when a record may already be in your collection and lets you raise the quantity instead.
+- **Duplicate check** – Asks when a record with the same Discogs ID or the same title and artist already exists, then raises the quantity or adds a separate entry, whichever you choose.
 - **Organization** – Shelf location, sleeve condition, quantity, comments, your own photos, and filters for genre, style and decade.
 - **Value estimates** – Lowest marketplace price from Discogs, or a condition-based price suggestion if you set a token, converted into your preferred currency (EUR, USD or GBP).
 - **Statistics** – Genre distribution, sleeve condition, records by release year, most valuable records and latest additions.
@@ -200,7 +200,8 @@ RecordRanger/
 
 | **Version** | **Features** | **Status** |
 | :---: | :--- | :---: |
-| **Next** | <ul><li>Safer backup restore and duplicate handling</li><li>More stability during database outages</li><li>Further security hardening</li><li>Major dependency upgrades and automated tests</li></ul> | <img src="https://img.shields.io/badge/Planned-6E7681?style=for-the-badge" alt="Planned"> |
+| **Next** | <ul><li>Further security hardening</li><li>Major dependency upgrades and automated tests</li><li>Cleanup of remaining untranslated texts</li></ul> | <img src="https://img.shields.io/badge/Planned-6E7681?style=for-the-badge" alt="Planned"> |
+| **1.0.2** | <ul><li>Duplicates are always detected, and a new entry never overwrites an existing one</li><li>Backup restore validates the file first, keeps a snapshot and rolls back on failure</li><li>The app starts and recovers on its own when the database is unavailable</li><li>Scheduled backups run reliably and catch up after downtime</li><li>Collection value converts between currencies correctly</li><li>Login right after first-run setup works</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
 | **1.0.1** | <ul><li>First-run setup is locked once an admin exists</li><li>Avatar uploads only accept real image files</li><li>Fixed cross-site scripting issues in the admin panel, statistics and duplicate check</li><li>Hidden records and genres stay hidden on every page</li><li>Estimating, importing and editing are admin-only</li><li>Stricter input validation and updated dependencies</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
 | **1.0.0** | <ul><li>Discogs search, barcode scanner and manual entry</li><li>Discogs and Musik-Sammler import</li><li>Value estimates with currency conversion</li><li>Statistics, duplicate check, print and PDF export</li><li>Scheduled backups, color themes, five languages</li><li>Docker image and Unraid template</li></ul> | <img src="https://img.shields.io/badge/Released-FF89A9?style=for-the-badge" alt="Released"> |
 

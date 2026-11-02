@@ -64,7 +64,7 @@ router.post('/import', async (req, res) => {
         res.status(200).json({ success: true, message: "Import successful" });
     } catch (err) {
         console.error("[ERR] Import :", err);
-        res.status(err.message === 'Backup file missing required fields' ? 400 : 500).json({ error: err.message });
+        res.status(err.invalidBackup ? 400 : 500).json({ error: err.message });
     }
 });
 

@@ -135,6 +135,7 @@
       "discogs_url": "Sammlungs-URL",
       "email": "E-Mail-Adresse",
       "import_done": "Artikel hinzugefügt!",
+      "import_skipped": "bereits vorhanden und übersprungen",
       "import_error_msg": "Beim Import ist ein Fehler aufgetreten. \nÜberprüfe die URL oder dein API-Token.",
       "import_fast": "Schneller Import",
       "import_full": "Vollständiger Import",
@@ -328,6 +329,9 @@
     "title": "Album bearbeiten"
   },
   "errors": {
+    "duplicate_check_failed": "Die Duplikatprüfung ist fehlgeschlagen. Die Platte wurde nicht gespeichert, bitte versuche es erneut.",
+    "invalid_discogs_id": "Die Discogs-ID darf nur aus Ziffern bestehen.",
+    "database_unavailable": "Die Datenbank ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.",
     "404_desc": "Die von dir gesuchte Seite scheint aus der Sammlung entfernt worden zu sein.",
     "404_title": "Hoppla! \nGroove nicht gefunden.",
     "api_error": "Es konnte keine Verbindung zu Discogs hergestellt werden.",

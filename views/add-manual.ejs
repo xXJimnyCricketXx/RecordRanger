@@ -268,7 +268,8 @@
             form.submit();
         };
 
-        checkDuplicate(title, artist, null, doSubmit);
+        const discogsId = form.querySelector('[name="discogs_id"]')?.value || '';
+        checkDuplicate(title, artist, discogsId, doSubmit);
     }
 </script>
 
